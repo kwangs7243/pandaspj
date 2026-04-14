@@ -1,10 +1,10 @@
 # 전체 데이터 확인
+# 특정 월 데이터만 보기
+# 월별 수입/지출 요약
 # 카테고리별 지출 합계
 # 가장 큰 지출 5개 보기
 # 키워드 검색
 # 분석 결과 저장
-# 특정 월 데이터만 보기
-# 월별 수입/지출 요약
 import pandas as pd
 class DataAnalyzer():
     # 객체생성
@@ -46,10 +46,12 @@ class DataAnalyzer():
                                 {"date_dt":"date", "type_map":"type", 
                                 "category_map":"category", "amount_num":"amount"})
         return analysis_data
+    
     def filter_by_month(self,month):
         analysis_data = self.get_analysis_data()
         filtered_data = analysis_data[analysis_data["month"]==month]
         return filtered_data
+    
     def summary_by_month(self,month):
         filtered_data = self.filter_by_month(month)
         summary_data = filtered_data.groupby("type")[["amount"]].sum()
@@ -66,9 +68,17 @@ class DataAnalyzer():
         summary_data = filtered_data.groupby("category")[["amount"]].sum()
         return summary_data
     
+    def get_top_n_by_type(self, type_name, n):
+        analysis_data = self.get_analysis_data()
+        result = analysis_data[analysis_data["type"]==type_name].sort_values(by="amount",ascending=False).head(n)
+        return result
+
+
+
+
 da = DataAnalyzer()
 da.load_data('messy_expense_data.csv')
 da.preprocess_data()
-print(da. filter_by_category_type())
+print(da.get_top_n_by_type(5,"지출"))
 
 
