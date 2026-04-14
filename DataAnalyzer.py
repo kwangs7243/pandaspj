@@ -22,22 +22,41 @@ class DataAnalyzer():
     # [^\d] 정규식패턴중하나 [] = or, ^ : not , \d : 숫자(0~9) => 숫자가아닌패턴을 찾는다
     # 전처리 과정을 컬럼으로 남겨서 원본 => 중간 => 결과 이런흐름을 확인할수있는 습관을 들여야한다
     def preprocess_data(self):
-        self.df.columns = ["date","type","category","amount","content"]
-        self.df["type"] = self.df["type"].str.strip().str.replace(" ", "", regex=False).str.lower()
-        self.df["type"] = self.df["type"].str.replace({
+        self.df.columns = ["date_raw","type_raw","category_raw","amount_raw","content"]
+        self.df["date_str"] = self.df["date_raw"].str.replace(r"[^\d]", "-", regex=True)
+        self.df["date_dt"] = pd.to_datetime(self.df["date_str"], errors="coerce")
+        self.df["year"] = self.df["date_dt"].dt.year
+        self.df["month"] = self.df["date_dt"].dt.month
+        self.df["type_str"] = self.df["type_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
+        self.df["type_map"] = self.df["type_str"].str.replace({
             'income':'수입','refund':'수입','expense':'지출'})
-        self.df["category"] = self.df["category"].str.strip().str.replace(" ", "", regex=False).str.lower()
-        self.df["category"] = self.df["category"].str.replace({
+        self.df["category_str"] = self.df["category_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
+        self.df["category_map"] = self.df["category_str"].str.replace({
             'food':'식비','cafe':'카페','shopping':'쇼핑',
             'bonus':'급여','salary':'급여',
             'transport':'교통'})
-        self.df["amount_str"] = self.df["amount"].str.replace(r"[^\d]","",regex=True)
+        self.df["amount_str"] = self.df["amount_raw"].str.replace(r"[^\d]","",regex=True)
         self.df["amount_num"] = pd.to_numeric(self.df["amount_str"],errors="coerce")
-
-
+    
+    def get_analysis_data(self):
+        analysis_data = self.df[["date_dt","year","month","type_map",
+                            "category_map","amount_num","content"]].copy()
+        analysis_data = analysis_data.rename(
+                            columns=
+                                {"date_dt":"date", "type_map":"type", 
+                                "category_map":"category", "amount_num":"amount"})
+        return analysis_data
+    def filter_by_month(self,month):
+        analysis_data = self.get_analysis_data()
+        filtered_data = analysis_data[analysis_data["month"]==month]
+        return filtered_data
+    def summary_by_month(self,month):
+        filtered_data = self.filter_by_month(month)
+        summary_data = filtered_data.groupby("type")[["amount"]].sum()
+        return summary_data
 da = DataAnalyzer()
 da.load_data('messy_expense_data.csv')
 da.preprocess_data()
-print(da.df[["amount","amount_str","amount_num"]])
-print(da.df["amount_num"].agg(["count","mean","sum"]))
+print(da.summary_by_month(1))
+
 
