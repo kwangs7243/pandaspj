@@ -1,18 +1,18 @@
-# CSV 불러오기
 # 전체 데이터 확인
-# 월별 수입/지출 요약
 # 카테고리별 지출 합계
 # 가장 큰 지출 5개 보기
-# 특정 월 데이터만 보기
 # 키워드 검색
 # 분석 결과 저장
+# 특정 월 데이터만 보기
+# 월별 수입/지출 요약
 import pandas as pd
 class DataAnalyzer():
     # 객체생성
     def __init__(self):
         self.df = None
 
-    # 파일경로를 받아서 파일 읽기 => 데이터프레임으로 처리됨 na_values : 잘못들어온값을 NaN으로 치환해줌
+    # CSV 불러오기
+    #  파일경로를 받아서 파일 읽기 => 데이터프레임으로 처리됨 na_values : 잘못들어온값을 NaN으로 치환해줌
     def load_data(self,file_path):
         self.df = pd.read_csv(file_path,encoding="utf-8-sig",na_values=["not_available"]) 
 
@@ -54,9 +54,21 @@ class DataAnalyzer():
         filtered_data = self.filter_by_month(month)
         summary_data = filtered_data.groupby("type")[["amount"]].sum()
         return summary_data
+    
+    def summary_by_category_type(self):
+        analysis_data = self.get_analysis_data()
+        summary_data = analysis_data.groupby(["category", "type"])[["amount"]].sum()
+        return summary_data
+
+    def summary_by_category(self, type):
+        analysis_data = self.get_analysis_data()
+        filtered_data = analysis_data[analysis_data["type"] == type]
+        summary_data = filtered_data.groupby("category")[["amount"]].sum()
+        return summary_data
+    
 da = DataAnalyzer()
 da.load_data('messy_expense_data.csv')
 da.preprocess_data()
-print(da.summary_by_month(1))
+print(da. filter_by_category_type())
 
 
