@@ -23,18 +23,22 @@ class DataAnalyzer():
     # 전처리 과정을 컬럼으로 남겨서 원본 => 중간 => 결과 이런흐름을 확인할수있는 습관을 들여야한다
     def preprocess_data(self):
         self.df.columns = ["date_raw","type_raw","category_raw","amount_raw","content"]
+
         self.df["date_str"] = self.df["date_raw"].str.replace(r"[^\d]", "-", regex=True)
         self.df["date_dt"] = pd.to_datetime(self.df["date_str"], errors="coerce")
         self.df["year"] = self.df["date_dt"].dt.year
         self.df["month"] = self.df["date_dt"].dt.month
+
         self.df["type_str"] = self.df["type_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
         self.df["type_map"] = self.df["type_str"].str.replace({
             'income':'수입','refund':'수입','expense':'지출'})
+        
         self.df["category_str"] = self.df["category_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
         self.df["category_map"] = self.df["category_str"].str.replace({
             'food':'식비','cafe':'카페','shopping':'쇼핑',
             'bonus':'급여','salary':'급여',
             'transport':'교통'})
+        
         self.df["amount_str"] = self.df["amount_raw"].str.replace(r"[^\d]","",regex=True)
         self.df["amount_num"] = pd.to_numeric(self.df["amount_str"],errors="coerce")
     
@@ -45,33 +49,42 @@ class DataAnalyzer():
                             columns=
                                 {"date_dt":"date", "type_map":"type", 
                                 "category_map":"category", "amount_num":"amount"})
+        
         return analysis_data
     
     def filter_by_month(self,month):
         analysis_data = self.get_analysis_data()
         filtered_data = analysis_data[analysis_data["month"]==month]
+
         return filtered_data
     
     def summary_by_month(self,month):
         filtered_data = self.filter_by_month(month)
         summary_data = filtered_data.groupby("type")[["amount"]].sum()
+
         return summary_data
     
     def summary_by_category_type(self):
         analysis_data = self.get_analysis_data()
         summary_data = analysis_data.groupby(["category", "type"])[["amount"]].sum()
+
         return summary_data
 
     def summary_by_category(self, type):
         analysis_data = self.get_analysis_data()
         filtered_data = analysis_data[analysis_data["type"] == type]
         summary_data = filtered_data.groupby("category")[["amount"]].sum()
+
         return summary_data
     
     def get_top_n_by_type(self, type_name, n):
         analysis_data = self.get_analysis_data()
-        result = analysis_data[analysis_data["type"]==type_name].sort_values(by="amount",ascending=False).head(n)
-        return result
+        top_data = (
+            analysis_data[analysis_data["type"]==type_name]
+            .sort_values(by="amount",ascending=False)
+            .head(n)
+            )
+        return top_data
 
 
 
@@ -79,6 +92,6 @@ class DataAnalyzer():
 da = DataAnalyzer()
 da.load_data('messy_expense_data.csv')
 da.preprocess_data()
-print(da.get_top_n_by_type(5,"지출"))
+print(da.get_top_n_by_type("지출",5))
 
 
