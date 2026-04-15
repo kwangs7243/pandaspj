@@ -58,8 +58,8 @@ class DataAnalyzer():
 
         return filtered_data
     
-    def summary_by_month(self,month):
-        filtered_data = self.filter_by_month(month)
+    def summary_by_month(self,year,month):
+        filtered_data = self.filter_by_month(year,month)
         summary_data = filtered_data.groupby("type")[["amount"]].sum()
 
         return summary_data
@@ -70,9 +70,9 @@ class DataAnalyzer():
 
         return summary_data
 
-    def summary_by_category(self, type):
+    def summary_by_category(self, type_name):
         analysis_data = self.get_analysis_data()
-        filtered_data = analysis_data[analysis_data["type"] == type]
+        filtered_data = analysis_data[analysis_data["type"] == type_name]
         summary_data = filtered_data.groupby("category")[["amount"]].sum()
 
         return summary_data
@@ -104,7 +104,6 @@ class DataAnalyzer():
 da = DataAnalyzer()
 da.load_data('messy_expense_data.csv')
 da.preprocess_data()
-da.save_data(da.df,"test1")
-print(da.filter_by_month(2026,1))
+print(da.get_analysis_data())
 
 
