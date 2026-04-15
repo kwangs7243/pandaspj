@@ -30,11 +30,11 @@ class DataAnalyzer():
         self.df["month"] = self.df["date_dt"].dt.month
 
         self.df["type_str"] = self.df["type_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
-        self.df["type_map"] = self.df["type_str"].str.replace({
+        self.df["type_map"] = self.df["type_str"].replace({
             'income':'수입','refund':'수입','expense':'지출'})
         
         self.df["category_str"] = self.df["category_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
-        self.df["category_map"] = self.df["category_str"].str.replace({
+        self.df["category_map"] = self.df["category_str"].replace({
             'food':'식비','cafe':'카페','shopping':'쇼핑',
             'bonus':'급여','salary':'급여',
             'transport':'교통'})
@@ -52,9 +52,9 @@ class DataAnalyzer():
         
         return analysis_data
     
-    def filter_by_month(self,month):
+    def filter_by_month(self,year,month):
         analysis_data = self.get_analysis_data()
-        filtered_data = analysis_data[analysis_data["month"]==month]
+        filtered_data = analysis_data[(analysis_data["year"]==year) & (analysis_data["month"]==month)]
 
         return filtered_data
     
@@ -85,6 +85,18 @@ class DataAnalyzer():
             .head(n)
             )
         return top_data
+    
+    def filter_by_keyword(self, keyword=""):
+        keyword = keyword.strip()
+        analysis_data = self.get_analysis_data()
+        if not keyword:
+            return analysis_data
+        filtered_data = analysis_data[analysis_data["content"].str.contains(keyword,na=False)]
+        return filtered_data
+
+    def save_data(self,data,file_path,index=True):
+        data.to_csv(file_path, index=index, encoding="utf-8-sig")
+
 
 
 
@@ -92,6 +104,7 @@ class DataAnalyzer():
 da = DataAnalyzer()
 da.load_data('messy_expense_data.csv')
 da.preprocess_data()
-print(da.get_top_n_by_type("지출",5))
+da.save_data(da.df,"test1")
+print(da.filter_by_month(2026,1))
 
 
