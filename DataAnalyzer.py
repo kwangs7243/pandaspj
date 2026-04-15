@@ -10,11 +10,24 @@ class DataAnalyzer():
     # 객체생성
     def __init__(self):
         self.df = None
+    # 데이터를 로드했는지 확인 => 아닐경우 오류 발생시키기
+    def _check_loaded(self):
+        if self.df is None:
+            raise RuntimeError("먼저 load_data()를 실행해야 합니다.")
+        
+    # 데이터를 전처리했는지 확인 => 아닐경우 오류발생시키기 (누락된 컬럼명 같이 안내 디버깅 좋음)
+    def _check_preprocessed(self):
+        self._check_loaded()
+        required_columns = ["date_dt", "year", "month", "type_map", "category_map", "amount_num"]
+        missing_columns = [col for col in required_columns if col not in self.df]
+        if missing_columns:
+            raise RuntimeError("먼저 preprocess_data()를 실행해야 합니다."
+                               f"누락된 컬럼 : {missing_columns}")
 
     # CSV 불러오기
     #  파일경로를 받아서 파일 읽기 => 데이터프레임으로 처리됨 na_values : 잘못들어온값을 NaN으로 치환해줌
     def load_data(self,file_path):
-        self.df = pd.read_csv(file_path,encoding="utf-8-sig",na_values=["not_available"]) 
+        self.df = pd.read_csv(file_path,encoding="utf-8-sig",na_values=["not_available"])
 
     # 데이터 전처리
     # self.df["amount"] = self.df["amount"].str.strip().str.strip("원").str.strip("-").str.replace(",","",regex=False)
@@ -52,14 +65,14 @@ class DataAnalyzer():
         
         return analysis_data
     
-    def filter_by_month(self,year,month):
+    def filter_by_year_month(self,year,month):
         analysis_data = self.get_analysis_data()
         filtered_data = analysis_data[(analysis_data["year"]==year) & (analysis_data["month"]==month)]
 
         return filtered_data
     
-    def summary_by_month(self,year,month):
-        filtered_data = self.filter_by_month(year,month)
+    def summary_by_year_month(self,year,month):
+        filtered_data = self.filter_by_year_month(year,month)
         summary_data = filtered_data.groupby("type")[["amount"]].sum()
 
         return summary_data
@@ -97,13 +110,5 @@ class DataAnalyzer():
     def save_data(self,data,file_path,index=True):
         data.to_csv(file_path, index=index, encoding="utf-8-sig")
 
-
-
-
-
-da = DataAnalyzer()
-da.load_data('messy_expense_data.csv')
-da.preprocess_data()
-print(da.get_analysis_data())
 
 
