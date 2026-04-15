@@ -19,7 +19,7 @@ class DataAnalyzer():
     def _check_preprocessed(self):
         self._check_loaded()
         required_columns = ["date_dt", "year", "month", "type_map", "category_map", "amount_num"]
-        missing_columns = [col for col in required_columns if col not in self.df]
+        missing_columns = [col for col in required_columns if col not in self.df.columns]
         if missing_columns:
             raise RuntimeError("먼저 preprocess_data()를 실행해야 합니다."
                                f"누락된 컬럼 : {missing_columns}")
@@ -35,27 +35,32 @@ class DataAnalyzer():
     # [^\d] 정규식패턴중하나 [] = or, ^ : not , \d : 숫자(0~9) => 숫자가아닌패턴을 찾는다
     # 전처리 과정을 컬럼으로 남겨서 원본 => 중간 => 결과 이런흐름을 확인할수있는 습관을 들여야한다
     def preprocess_data(self):
-        self.df.columns = ["date_raw","type_raw","category_raw","amount_raw","content"]
+        self._check_loaded()
+        df = self.df
+        
+        df.columns = ["date_raw","type_raw","category_raw","amount_raw","content"]
 
-        self.df["date_str"] = self.df["date_raw"].str.replace(r"[^\d]", "-", regex=True)
-        self.df["date_dt"] = pd.to_datetime(self.df["date_str"], errors="coerce")
-        self.df["year"] = self.df["date_dt"].dt.year
-        self.df["month"] = self.df["date_dt"].dt.month
+        df["date_str"] = df["date_raw"].str.replace(r"[^\d]", "-", regex=True)
+        df["date_dt"] = pd.to_datetime(df["date_str"], errors="coerce")
+        df["year"] = df["date_dt"].dt.year
+        df["month"] = df["date_dt"].dt.month
 
-        self.df["type_str"] = self.df["type_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
-        self.df["type_map"] = self.df["type_str"].replace({
+        df["type_str"] = df["type_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
+        df["type_map"] = df["type_str"].replace({
             'income':'수입','refund':'수입','expense':'지출'})
         
-        self.df["category_str"] = self.df["category_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
-        self.df["category_map"] = self.df["category_str"].replace({
+        df["category_str"] = df["category_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
+        df["category_map"] = df["category_str"].replace({
             'food':'식비','cafe':'카페','shopping':'쇼핑',
             'bonus':'급여','salary':'급여',
             'transport':'교통'})
         
-        self.df["amount_str"] = self.df["amount_raw"].str.replace(r"[^\d]","",regex=True)
-        self.df["amount_num"] = pd.to_numeric(self.df["amount_str"],errors="coerce")
+        df["amount_str"] = df["amount_raw"].str.replace(r"[^\d]","",regex=True)
+        df["amount_num"] = pd.to_numeric(df["amount_str"],errors="coerce")
     
-    def get_analysis_data(self):
+    def get_analysis_data(self) -> pd.DataFrame:
+        self._check_preprocessed()
+
         analysis_data = self.df[["date_dt","year","month","type_map",
                             "category_map","amount_num","content"]].copy()
         analysis_data = analysis_data.rename(
@@ -67,7 +72,8 @@ class DataAnalyzer():
     
     def filter_by_year_month(self,year,month):
         analysis_data = self.get_analysis_data()
-        filtered_data = analysis_data[(analysis_data["year"]==year) & (analysis_data["month"]==month)]
+        filtered_data : pd.DataFrame  = analysis_data[(analysis_data["year"]==year) & (analysis_data["month"]==month)]
+        filtered_data = filtered_data.sort_values(by="date")
 
         return filtered_data
     
@@ -80,20 +86,21 @@ class DataAnalyzer():
     def summary_by_category_type(self):
         analysis_data = self.get_analysis_data()
         summary_data = analysis_data.groupby(["category", "type"])[["amount"]].sum()
-
+        summary_data = summary_data.sort_values(by="type")
         return summary_data
 
     def summary_by_category(self, type_name):
         analysis_data = self.get_analysis_data()
-        filtered_data = analysis_data[analysis_data["type"] == type_name]
+        filtered_data : pd.DataFrame = analysis_data[analysis_data["type"] == type_name]
         summary_data = filtered_data.groupby("category")[["amount"]].sum()
 
         return summary_data
     
     def get_top_n_by_type(self, type_name, n):
-        analysis_data = self.get_analysis_data()
+        analysis_data : pd.DataFrame = self.get_analysis_data()
+        filtered_data : pd.DataFrame = analysis_data[analysis_data["type"]==type_name]
         top_data = (
-            analysis_data[analysis_data["type"]==type_name]
+            filtered_data
             .sort_values(by="amount",ascending=False)
             .head(n)
             )
@@ -107,7 +114,7 @@ class DataAnalyzer():
         filtered_data = analysis_data[analysis_data["content"].str.contains(keyword,na=False)]
         return filtered_data
 
-    def save_data(self,data,file_path,index=True):
+    def save_data(self,data : pd.DataFrame,file_path,index=True):
         data.to_csv(file_path, index=index, encoding="utf-8-sig")
 
 
