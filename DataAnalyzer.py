@@ -93,6 +93,7 @@ class DataAnalyzer():
         analysis_data = self.get_analysis_data()
         filtered_data : pd.DataFrame = analysis_data[analysis_data["type"] == type_name]
         summary_data = filtered_data.groupby("category")[["amount"]].sum()
+        summary_data = summary_data.sort_values(by="amount", ascending=False)
 
         return summary_data
     
@@ -112,6 +113,7 @@ class DataAnalyzer():
         if not keyword:
             return analysis_data
         filtered_data = analysis_data[analysis_data["content"].str.contains(keyword,na=False)]
+        filtered_data = filtered_data.sort_values(by="date")
         return filtered_data
 
     def save_data(self,data : pd.DataFrame,file_path,index=True):
