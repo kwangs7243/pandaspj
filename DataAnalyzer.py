@@ -58,6 +58,9 @@ class DataAnalyzer():
         df["amount_str"] = df["amount_raw"].str.replace(r"[^\d]","",regex=True)
         df["amount_num"] = pd.to_numeric(df["amount_str"],errors="coerce")
     
+    def find_invalid_rows(self):
+        pass
+    
     def get_analysis_data(self) -> pd.DataFrame:
         self._check_preprocessed()
 
