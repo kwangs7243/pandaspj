@@ -41,7 +41,8 @@ class DataAnalyzer():
         
         df.columns = ["date_raw","type_raw","category_raw","amount_raw","content"]
 
-        df["date_str"] = df["date_raw"].str.replace(r"[^\d]", "-", regex=True)
+        df["date_parts"] = df["date_raw"].str.findall(r"\d+")
+        df["date_str"] = df["date_parts"].str.join("-")
         df["date_dt"] = pd.to_datetime(df["date_str"], errors="coerce")
         df["year"] = df["date_dt"].dt.year
         df["month"] = df["date_dt"].dt.month
@@ -56,8 +57,13 @@ class DataAnalyzer():
             'bonus':'급여','salary':'급여',
             'transport':'교통'})
 
-        df["amount_str"] = df["amount_raw"].str.replace(r"[^\d]","",regex=True)
+        is_MAN = df["amount_raw"].str.contains("만")
+        is_CHUN = df["amount_raw"].str.contains("천")
+        df["amount_parts"] = df["amount_raw"].str.findall(r"\d+")
+        df["amount_str"] = df["amount_parts"].str.join("")
         df["amount_num"] = pd.to_numeric(df["amount_str"],errors="coerce")
+        df.loc[is_MAN,"amount_num"] = df.loc[is_MAN,"amount_num"] * 10000
+        df.loc[is_CHUN,"amount_num"] = df.loc[is_CHUN,"amount_num"] * 1000
 
     # 전처리 실패항목 체크하기
     def find_invalid_rows(self):
@@ -65,7 +71,7 @@ class DataAnalyzer():
         date_invalid = df["date_dt"].isna()
         type_invalid = ~df["type_map"].isin(["수입","지출"]) | df["type_map"].isna()
         amount_invalid = df["amount_num"].isna()
-        category_invalid = df["category_map"].isna()
+        category_invalid = (df["category_map"].str.strip() == "") | df["category_map"].isna()  
         content_invalid = df["content"].isna()
         invalid_mask = date_invalid | type_invalid | amount_invalid | category_invalid | content_invalid
 

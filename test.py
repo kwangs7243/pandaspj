@@ -29,8 +29,9 @@ da.preprocess_data()
 # 전체적으로 원본 csv가 날짜별로 들어와있어서 정렬을 안해도 날짜순이지만 아닐경우를 대비해서 정렬필요성느낌
 
 invalid =  da.find_invalid_rows()
-print(invalid[["date_raw","type_raw","amount_raw","category_raw","content"]])
+invalid_view = invalid[["date_raw","type_raw","amount_raw","category_raw","content"]]
+# print(invalid_view)
 
 print(f"전체 행 수 : {len(da.df)}")
 print(f"정상 행 수: {len(da.get_view_data())}")
-print(f"실패 행 수: {len(invalid[["date_raw","type_raw","amount_raw","category_raw","content"]])}")
+print(f"실패 행 수: {len(invalid_view)}")
