@@ -94,6 +94,7 @@ class DataAnalyzer():
         invalid_mask = date_invalid | type_invalid | amount_invalid | category_invalid | content_invalid
 
         return df[invalid_mask]
+    
 
     # 분석용 데이터 생성
     def get_analysis_data(self):
@@ -118,18 +119,17 @@ class DataAnalyzer():
         return analysis_data
     
     # 출력용 데이터 생성
-    def get_view_data(self):
-        analysis_data = self.get_analysis_data()
-        view_data = analysis_data[["date", "type", "category", "amount", "content"]]
+    def get_view_data(self,data):
+        view_data = data[["date", "type", "category", "amount", "content"]]
 
         return view_data
     
     # 년,월 필터 데이터
     def filter_by_year_month(self,year,month):
-        analysis_data = self.get_analysis_data()
+        analysis_data = self.get_view_data()
         filtered_data : pd.DataFrame  = analysis_data[(analysis_data["year"]==year) & (analysis_data["month"]==month)]
         filtered_data = filtered_data.sort_values(by="date")
-
+        filtered_data = self.get_view_data(filtered_data)
         return filtered_data
     
     # 년,월 요약데이터 (수입 지출 총액 요약) 저장시 인덱스 True
@@ -165,6 +165,7 @@ class DataAnalyzer():
             .sort_values(by="amount",ascending=False)
             .head(n)
             )
+        top_data = self.get_view_data(top_data)
         
         return top_data
     
@@ -174,9 +175,11 @@ class DataAnalyzer():
         analysis_data = self.get_analysis_data()
         if not keyword:
             return analysis_data
+        
         filtered_data = analysis_data[analysis_data["content"].str.contains(keyword,na=False)]
         filtered_data = filtered_data.sort_values(by="date")
-
+        filtered_data = self.get_view_data(filtered_data)
+        
         return filtered_data
 
     # 데이터 저장
