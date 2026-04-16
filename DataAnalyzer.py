@@ -1,10 +1,3 @@
-# 전체 데이터 확인
-# 특정 월 데이터만 보기
-# 월별 수입/지출 요약
-# 카테고리별 지출 합계
-# 가장 큰 지출 5개 보기
-# 키워드 검색
-# 분석 결과 저장
 import pandas as pd
 class DataAnalyzer():
     # 객체생성 (데이터프레임을 담을 객체, 타입허용값, 카테고리허용값)
@@ -98,18 +91,7 @@ class DataAnalyzer():
     def get_invalid_summary(self):
         self._check_preprocessed()
 
-        invalid_summary = { "전체 행 수" : ...,
-                            "성공 행 수" : ...,
-                            "실패 행 수" : ...,
-                            "성공률" : ...,
-                            "실패사유" : {
-                                        "날짜변환실패" : ...,
-                                        "타입변환실패" : ...,
-                                        "금액변환실패" : ...,
-                                        "카테고리변환실패" : ...,
-                                        "내용없음" : ...
-                                        }
-                            }
+        invalid_summary = {}
         
         analysis_data = self.get_analysis_data()
         invalid_df = self.find_invalid_rows()
@@ -117,23 +99,32 @@ class DataAnalyzer():
         invalid_summary["전체 행 수"] = len(self.df)
         invalid_summary["성공 행 수"] = len(analysis_data)
         invalid_summary["실패 행 수"] = len(invalid_df)
+        
         if invalid_summary["전체 행 수"] == 0 :
             invalid_summary["성공률"] = "계산불가"
         else:
             invalid_summary["성공률"] = (invalid_summary["성공 행 수"]/ invalid_summary["전체 행 수"]) * 100
+
+        invalid_summary["실패사유"] = {
+                                        "날짜변환실패": 0,
+                                        "타입변환실패": 0,
+                                        "금액변환실패": 0,
+                                        "카테고리변환실패": 0,
+                                        "내용없음": 0
+                                    }
         for key in invalid_summary["실패사유"]:
             invalid_summary["실패사유"][key] = int(invalid_df["invalid_reason"].isin([key]).sum())
 
         return invalid_summary
+    
     # 분석용 데이터 생성
     def get_analysis_data(self):
         self._check_preprocessed()
-        df = self.df.copy()
         valid_types = self.valid_types
         valid_categories = self.valid_categories
 
-        analysis_data : pd.DataFrame = df[["date_dt","year","month","type_map",
-                            "category_map","amount_num","content"]]
+        analysis_data : pd.DataFrame = self.df[["date_dt","year","month","type_map",
+                            "category_map","amount_num","content"]].copy()
         
         analysis_data = analysis_data.rename(
                             columns=
@@ -156,14 +147,17 @@ class DataAnalyzer():
     # 년,월 필터 데이터
     def filter_by_year_month(self,year,month):
         analysis_data = self.get_analysis_data()
-        filtered_data : pd.DataFrame  = analysis_data[(analysis_data["year"]==year) & (analysis_data["month"]==month)]
+        filtered_data : pd.DataFrame  = analysis_data[((analysis_data["year"]==year) &
+                                                        (analysis_data["month"]==month))]
         filtered_data = filtered_data.sort_values(by="date")
         filtered_data = self.get_view_data(filtered_data)
         return filtered_data
     
     # 년,월 요약데이터 (수입 지출 총액 요약) 저장시 인덱스 True
     def summary_by_year_month(self,year,month):
-        filtered_data = self.filter_by_year_month(year,month)
+        analysis_data = self.get_analysis_data()
+        filtered_data : pd.DataFrame  = analysis_data[((analysis_data["year"]==year) &
+                                                        (analysis_data["month"]==month))]
         summary_data = filtered_data.groupby("type")[["amount"]].sum()
 
         return summary_data
