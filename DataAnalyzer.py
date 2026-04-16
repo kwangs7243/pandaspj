@@ -25,7 +25,7 @@ class DataAnalyzer():
         missing_columns = [col for col in required_columns if col not in self.df.columns]
         if missing_columns:
             raise RuntimeError("먼저 preprocess_data()를 실행해야 합니다."
-                               f"누락된 컬럼 : {missing_columns}")
+                                f"누락된 컬럼 : {missing_columns}")
 
     # CSV 불러오기
     #  파일경로를 받아서 파일 읽기 => 데이터프레임으로 처리됨 na_values : 잘못들어온값을 NaN으로 치환해줌
@@ -71,19 +71,26 @@ class DataAnalyzer():
 
     # 전처리 실패항목 체크하기
     def find_invalid_rows(self):
-        df = self.df
+        self._check_preprocessed()
+        df = self.df.copy()
         valid_types = self.valid_types
         valid_categories = self.valid_categories
 
         date_invalid = df["date_dt"].isna()
         type_invalid = ~df["type_map"].isin(valid_types) | df["type_map"].isna()
         amount_invalid = df["amount_num"].isna()
-        category_invalid = ( (~df["category_map"].isin(valid_categories)) | 
-                           (df["category_map"].str.strip() == "") | 
-                           (df["category_map"].isna())
-                           )
+        category_invalid = ((~df["category_map"].isin(valid_categories)) | 
+                            (df["category_map"].str.strip() == "") | 
+                            (df["category_map"].isna())
+                            )
         content_invalid = df["content"].isna()
         df["invalid_reason"] = ""
+        df.loc[date_invalid,"invalid_reason"] = "날짜변환실패"
+        df.loc[(type_invalid) & (df["invalid_reason"]==""), "invalid_reason"] = "타입변환실패"
+        df.loc[(amount_invalid) & (df["invalid_reason"]==""), "invalid_reason"] = "금액변환실패"
+        df.loc[(category_invalid) & (df["invalid_reason"]==""), "invalid_reason"] = "카테고리변환실패"
+        df.loc[(content_invalid) & (df["invalid_reason"]==""), "invalid_reason"] = "내용없음"
+
         invalid_mask = date_invalid | type_invalid | amount_invalid | category_invalid | content_invalid
 
         return df[invalid_mask]
@@ -91,9 +98,10 @@ class DataAnalyzer():
     # 분석용 데이터 생성
     def get_analysis_data(self):
         self._check_preprocessed()
+        df = self.df.copy
 
-        analysis_data = self.df[["date_dt","year","month","type_map",
-                            "category_map","amount_num","content"]].copy()
+        analysis_data : pd.DataFrame = df[["date_dt","year","month","type_map",
+                            "category_map","amount_num","content"]]
         
         analysis_data = analysis_data.rename(
                             columns=
