@@ -119,7 +119,8 @@ class DataAnalyzer():
         invalid_summary["실패 행 수"] = len(invalid_df)
         if invalid_summary["전체 행 수"] == 0 :
             invalid_summary["성공률"] = "계산불가"
-        invalid_summary["성공률"] = (invalid_summary["성공 행 수"]/ invalid_summary["성공 행 수"]) * 100
+        else:
+            invalid_summary["성공률"] = (invalid_summary["성공 행 수"]/ invalid_summary["전체 행 수"]) * 100
         for key in invalid_summary["실패사유"]:
             invalid_summary["실패사유"][key] = int(invalid_df["invalid_reason"].isin([key]).sum())
 
@@ -129,7 +130,7 @@ class DataAnalyzer():
         self._check_preprocessed()
         df = self.df.copy()
         valid_types = self.valid_types
-        valid_categorys = self.valid_categories
+        valid_categories = self.valid_categories
 
         analysis_data : pd.DataFrame = df[["date_dt","year","month","type_map",
                             "category_map","amount_num","content"]]
@@ -142,7 +143,7 @@ class DataAnalyzer():
         analysis_data = analysis_data.dropna(axis=0)
 
         analysis_data = analysis_data[analysis_data["type"].isin(valid_types)]
-        analysis_data = analysis_data[analysis_data["category"].isin(valid_categorys)]
+        analysis_data = analysis_data[analysis_data["category"].isin(valid_categories)]
 
         return analysis_data
     
@@ -154,7 +155,7 @@ class DataAnalyzer():
     
     # 년,월 필터 데이터
     def filter_by_year_month(self,year,month):
-        analysis_data = self.get_view_data()
+        analysis_data = self.get_analysis_data()
         filtered_data : pd.DataFrame  = analysis_data[(analysis_data["year"]==year) & (analysis_data["month"]==month)]
         filtered_data = filtered_data.sort_values(by="date")
         filtered_data = self.get_view_data(filtered_data)
@@ -202,7 +203,7 @@ class DataAnalyzer():
         keyword = keyword.strip()
         analysis_data = self.get_analysis_data()
         if not keyword:
-            return analysis_data
+            return self.get_view_data(analysis_data)
         
         filtered_data = analysis_data[analysis_data["content"].str.contains(keyword,na=False)]
         filtered_data = filtered_data.sort_values(by="date")
