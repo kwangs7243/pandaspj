@@ -10,11 +10,12 @@ class DataAnalyzer():
     # 객체생성
     def __init__(self):
         self.df = None
+
     # 데이터를 로드했는지 확인 => 아닐경우 오류 발생시키기
     def _check_loaded(self):
         if self.df is None:
             raise RuntimeError("먼저 load_data()를 실행해야 합니다.")
-        
+
     # 데이터를 전처리했는지 확인 => 아닐경우 오류발생시키기 (누락된 컬럼명 같이 안내 디버깅 좋음)
     def _check_preprocessed(self):
         self._check_loaded()
@@ -62,12 +63,15 @@ class DataAnalyzer():
     def find_invalid_rows(self):
         df = self.df
         date_invalid = df["date_dt"].isna()
-        type_invalid = ~df["type_map"].isin(["수입","지출"])
+        type_invalid = ~df["type_map"].isin(["수입","지출"]) | df["type_map"].isna()
         amount_invalid = df["amount_num"].isna()
-        invalid_mask = date_invalid | type_invalid | amount_invalid
-        return df[invalid_mask]
-        
+        category_invalid = df["category_map"].isna()
+        content_invalid = df["content"].isna()
+        invalid_mask = date_invalid | type_invalid | amount_invalid | category_invalid | content_invalid
 
+        return df[invalid_mask]
+
+    # 분석용 데이터 생성
     def get_analysis_data(self):
         self._check_preprocessed()
 
@@ -78,8 +82,18 @@ class DataAnalyzer():
                                 {"date_dt":"date", "type_map":"type", 
                                 "category_map":"category", "amount_num":"amount"})
         
+        analysis_data = analysis_data.dropna(axis=0)
+
         return analysis_data
     
+    # 출력용 데이터 생성
+    def get_view_data(self):
+        analysis_data = self.get_analysis_data()
+        view_data = analysis_data[["date", "type", "category", "amount", "content"]]
+
+        return view_data
+    
+    # 년,월 필터 데이터
     def filter_by_year_month(self,year,month):
         analysis_data = self.get_analysis_data()
         filtered_data : pd.DataFrame  = analysis_data[(analysis_data["year"]==year) & (analysis_data["month"]==month)]
@@ -87,18 +101,22 @@ class DataAnalyzer():
 
         return filtered_data
     
+    # 년,월 요약데이터 (수입 지출 총액 요약) 저장시 인덱스 True
     def summary_by_year_month(self,year,month):
         filtered_data = self.filter_by_year_month(year,month)
         summary_data = filtered_data.groupby("type")[["amount"]].sum()
 
         return summary_data
     
+    # 카테고리,타입 요약 (카테고리 ,타입별 총액) 저장시 인덱스 True
     def summary_by_category_type(self):
         analysis_data = self.get_analysis_data()
         summary_data = analysis_data.groupby(["category", "type"])[["amount"]].sum()
         summary_data = summary_data.sort_values(by="type")
-        return summary_data
 
+        return summary_data
+    
+    # 카테고리 요약 (카테고리별 총액) 저장시 인덱스 True
     def summary_by_category(self, type_name):
         analysis_data = self.get_analysis_data()
         filtered_data : pd.DataFrame = analysis_data[analysis_data["type"] == type_name]
@@ -107,6 +125,7 @@ class DataAnalyzer():
 
         return summary_data
     
+    # 타입별 top n위까지 데이터생성
     def get_top_n_by_type(self, type_name, n):
         analysis_data : pd.DataFrame = self.get_analysis_data()
         filtered_data : pd.DataFrame = analysis_data[analysis_data["type"]==type_name]
@@ -115,8 +134,10 @@ class DataAnalyzer():
             .sort_values(by="amount",ascending=False)
             .head(n)
             )
+        
         return top_data
     
+    # 키워드 검색 
     def filter_by_keyword(self, keyword=""):
         keyword = keyword.strip()
         analysis_data = self.get_analysis_data()
@@ -124,9 +145,11 @@ class DataAnalyzer():
             return analysis_data
         filtered_data = analysis_data[analysis_data["content"].str.contains(keyword,na=False)]
         filtered_data = filtered_data.sort_values(by="date")
+
         return filtered_data
 
-    def save_data(self,data : pd.DataFrame,file_path,index=True):
+    # 데이터 저장
+    def save_data(self,data : pd.DataFrame,file_path,index=False):
         data.to_csv(file_path, index=index, encoding="utf-8-sig")
 
 
