@@ -54,14 +54,21 @@ class DataAnalyzer():
             'food':'식비','cafe':'카페','shopping':'쇼핑',
             'bonus':'급여','salary':'급여',
             'transport':'교통'})
-        
+
         df["amount_str"] = df["amount_raw"].str.replace(r"[^\d]","",regex=True)
         df["amount_num"] = pd.to_numeric(df["amount_str"],errors="coerce")
-    
+
+    # 전처리 실패항목 체크하기
     def find_invalid_rows(self):
-        pass
-    
-    def get_analysis_data(self) -> pd.DataFrame:
+        df = self.df
+        date_invalid = df["date_dt"].isna()
+        type_invalid = ~df["type_map"].isin(["수입","지출"])
+        amount_invalid = df["amount_num"].isna()
+        invalid_mask = date_invalid | type_invalid | amount_invalid
+        return df[invalid_mask]
+        
+
+    def get_analysis_data(self):
         self._check_preprocessed()
 
         analysis_data = self.df[["date_dt","year","month","type_map",
