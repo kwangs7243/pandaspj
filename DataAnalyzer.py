@@ -7,9 +7,11 @@
 # 분석 결과 저장
 import pandas as pd
 class DataAnalyzer():
-    # 객체생성
+    # 객체생성 (데이터프레임을 담을 객체, 타입허용값, 카테고리허용값)
     def __init__(self):
         self.df = None
+        self.valid_types = ["수입", "지출"]
+        self.valid_categories = ["쇼핑", "카페", "급여", "교통", "식비", "선물", "여행"]
 
     # 데이터를 로드했는지 확인 => 아닐경우 오류 발생시키기
     def _check_loaded(self):
@@ -70,12 +72,13 @@ class DataAnalyzer():
     # 전처리 실패항목 체크하기
     def find_invalid_rows(self):
         df = self.df
-        valid_type = ["수입", "지출"]
-        valid_category = ['쇼핑', '카페', '급여', '교통', '식비', '선물', '여행']
+        valid_types = self.valid_types
+        valid_categories = self.valid_categories
+
         date_invalid = df["date_dt"].isna()
-        type_invalid = ~df["type_map"].isin(valid_type) | df["type_map"].isna()
+        type_invalid = ~df["type_map"].isin(valid_types) | df["type_map"].isna()
         amount_invalid = df["amount_num"].isna()
-        category_invalid =( (~df["category_map"].isin(valid_category)) | 
+        category_invalid =( (~df["category_map"].isin(valid_categories)) | 
                            (df["category_map"].str.strip() == "") | 
                            (df["category_map"].isna())
                            )
@@ -97,10 +100,11 @@ class DataAnalyzer():
                                 "category_map":"category", "amount_num":"amount"})
         
         analysis_data = analysis_data.dropna(axis=0)
-        valid_type = ["수입", "지출"]
-        valid_category = ['쇼핑', '카페', '급여', '교통', '식비', '선물', '여행']
-        analysis_data = analysis_data[analysis_data["type"].isin(valid_type)]
-        analysis_data = analysis_data[analysis_data["category"].isin(valid_category)]
+        valid_types = self.valid_types
+        valid_categorys = self.valid_categories
+
+        analysis_data = analysis_data[analysis_data["type"].isin(valid_types)]
+        analysis_data = analysis_data[analysis_data["category"].isin(valid_categorys)]
 
         return analysis_data
     
