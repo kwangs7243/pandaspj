@@ -6,15 +6,9 @@ da.load_data("messy_expense_data_large.csv")
 da.preprocess_data()
 invalid = da.find_invalid_rows()
 
-invalid_filtered = invalid[
-    ~(invalid["date_raw"].isna() |
-      invalid["type_raw"].isna() |
-      invalid["amount_raw"].isna() |
-      invalid["category_raw"].isna() |
-      invalid["content"].isna())
-]
+print(invalid["invalid_reason"])
 # da.save_data(invalid_filtered,"invalid_data.csv")
-da.save_data(da.get_view_data(),"view_data.csv")
+# da.save_data(da.get_view_data(),"view_data.csv")
 # print(da.df.loc[da.df["amount_raw"].str.contains("천"),"amount_num"])
 # print(da.df["amount_str"])
 # print(invalid_view)

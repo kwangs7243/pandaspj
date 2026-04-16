@@ -78,11 +78,12 @@ class DataAnalyzer():
         date_invalid = df["date_dt"].isna()
         type_invalid = ~df["type_map"].isin(valid_types) | df["type_map"].isna()
         amount_invalid = df["amount_num"].isna()
-        category_invalid =( (~df["category_map"].isin(valid_categories)) | 
+        category_invalid = ( (~df["category_map"].isin(valid_categories)) | 
                            (df["category_map"].str.strip() == "") | 
                            (df["category_map"].isna())
                            )
         content_invalid = df["content"].isna()
+        df["invalid_reason"] = ""
         invalid_mask = date_invalid | type_invalid | amount_invalid | category_invalid | content_invalid
 
         return df[invalid_mask]
