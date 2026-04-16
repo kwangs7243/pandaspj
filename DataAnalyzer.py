@@ -98,7 +98,7 @@ class DataAnalyzer():
     # 분석용 데이터 생성
     def get_analysis_data(self):
         self._check_preprocessed()
-        df = self.df.copy
+        df = self.df.copy()
 
         analysis_data : pd.DataFrame = df[["date_dt","year","month","type_map",
                             "category_map","amount_num","content"]]
