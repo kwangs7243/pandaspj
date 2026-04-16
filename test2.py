@@ -5,7 +5,7 @@ da = DataAnalyzer()
 da.load_data("messy_expense_data_large.csv")
 da.preprocess_data()
 invalid = da.find_invalid_rows()
-print(da.df["category_map"].unique())
+# print(da.df["category_map"].unique())
 
 # print(invalid["invalid_reason"])
 # da.save_data(invalid_filtered,"invalid_data.csv")
@@ -21,3 +21,4 @@ print(da.df["category_map"].unique())
 # print(f"정상 행 수: {len(da.get_view_data())}")
 # print(f"실패 행 수: {len(invalid_view)}")
 
+print(da.get_invalid_summary())

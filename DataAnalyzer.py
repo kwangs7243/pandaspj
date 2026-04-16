@@ -95,11 +95,41 @@ class DataAnalyzer():
 
         return df[invalid_mask]
     
+    def get_invalid_summary(self):
+        self._check_preprocessed()
 
+        invalid_summary = { "전체 행 수" : ...,
+                            "성공 행 수" : ...,
+                            "실패 행 수" : ...,
+                            "성공률" : ...,
+                            "실패사유" : {
+                                        "날짜변환실패" : ...,
+                                        "타입변환실패" : ...,
+                                        "금액변환실패" : ...,
+                                        "카테고리변환실패" : ...,
+                                        "내용없음" : ...
+                                        }
+                            }
+        
+        analysis_data = self.get_analysis_data()
+        invalid_df = self.find_invalid_rows()
+
+        invalid_summary["전체 행 수"] = len(self.df)
+        invalid_summary["성공 행 수"] = len(analysis_data)
+        invalid_summary["실패 행 수"] = len(invalid_df)
+        if invalid_summary["전체 행 수"] == 0 :
+            invalid_summary["성공률"] = "계산불가"
+        invalid_summary["성공률"] = (invalid_summary["성공 행 수"]/ invalid_summary["성공 행 수"]) * 100
+        for key in invalid_summary["실패사유"]:
+            invalid_summary["실패사유"][key] = int(invalid_df["invalid_reason"].isin([key]).sum())
+
+        return invalid_summary
     # 분석용 데이터 생성
     def get_analysis_data(self):
         self._check_preprocessed()
         df = self.df.copy()
+        valid_types = self.valid_types
+        valid_categorys = self.valid_categories
 
         analysis_data : pd.DataFrame = df[["date_dt","year","month","type_map",
                             "category_map","amount_num","content"]]
@@ -110,8 +140,6 @@ class DataAnalyzer():
                                 "category_map":"category", "amount_num":"amount"})
         
         analysis_data = analysis_data.dropna(axis=0)
-        valid_types = self.valid_types
-        valid_categorys = self.valid_categories
 
         analysis_data = analysis_data[analysis_data["type"].isin(valid_types)]
         analysis_data = analysis_data[analysis_data["category"].isin(valid_categorys)]
@@ -179,7 +207,7 @@ class DataAnalyzer():
         filtered_data = analysis_data[analysis_data["content"].str.contains(keyword,na=False)]
         filtered_data = filtered_data.sort_values(by="date")
         filtered_data = self.get_view_data(filtered_data)
-        
+
         return filtered_data
 
     # 데이터 저장
