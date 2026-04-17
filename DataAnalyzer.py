@@ -4,7 +4,6 @@ class DataAnalyzer():
     def __init__(self):
         self.df = None
         self.valid_types = ["수입", "지출"]
-        self.valid_categories = ["쇼핑", "카페", "급여", "교통", "식비", "선물", "여행"]
 
     # 데이터를 로드했는지 확인 => 아닐경우 오류 발생시키기
     def _check_loaded(self):
@@ -38,13 +37,18 @@ class DataAnalyzer():
 
         df["date_parts"] = df["date_raw"].str.findall(r"\d+")
         df["date_str"] = df["date_parts"].str.join("-")
-        df["date_dt"] = pd.to_datetime(df["date_str"], errors="coerce")
+        df["date_dt"] = pd.to_datetime(df["date_str"], errors="coerce", format="mixed")
         df["year"] = df["date_dt"].dt.year
         df["month"] = df["date_dt"].dt.month
-
+#         [       '용돈',        '출금',       'buy',      'used', 'allowance',   'incomee',
+#               'unknown',    'salary',        '수익',   'payment',     'spend',        '??',
+#          nan,    'expnse',   'payback',     'other',        '입금']
         df["type_str"] = df["type_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
         df["type_map"] = df["type_str"].replace({
-            'income':'수입','refund':'수입','bonus':'수입','expense':'지출'})
+            'income':'수입','refund':'수입','bonus':'수입','용돈':'수입','입금':'수입',
+            'allowance':'수입', 'salary':'수입','수익':'수입','payback':'수입',
+            'expense':'지출','출금':'지출','buy':'지출','used':'지출',
+            'payment':'지출','spend':'지출','other':'지출'})
         
 
         df["category_str"] = df["category_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
@@ -67,21 +71,20 @@ class DataAnalyzer():
         self._check_preprocessed()
         df = self.df.copy()
         valid_types = self.valid_types
-        valid_categories = self.valid_categories
 
         date_invalid = df["date_dt"].isna()
         type_invalid = ~df["type_map"].isin(valid_types) | df["type_map"].isna()
         amount_invalid = df["amount_num"].isna()
-        category_invalid = ((~df["category_map"].isin(valid_categories)) | 
-                            (df["category_map"].str.strip() == "") | 
+        category_invalid = ((df["category_map"].str.strip() == "") | 
                             (df["category_map"].isna())
                             )
         content_invalid = df["content"].isna()
+
         df["invalid_reason"] = ""
         df.loc[date_invalid,"invalid_reason"] = "날짜변환실패"
         df.loc[(type_invalid) & (df["invalid_reason"]==""), "invalid_reason"] = "타입변환실패"
         df.loc[(amount_invalid) & (df["invalid_reason"]==""), "invalid_reason"] = "금액변환실패"
-        df.loc[(category_invalid) & (df["invalid_reason"]==""), "invalid_reason"] = "카테고리변환실패"
+        df.loc[(category_invalid) & (df["invalid_reason"]==""), "invalid_reason"] = "카테고리내용없음"
         df.loc[(content_invalid) & (df["invalid_reason"]==""), "invalid_reason"] = "내용없음"
 
         invalid_mask = date_invalid | type_invalid | amount_invalid | category_invalid | content_invalid
@@ -110,7 +113,7 @@ class DataAnalyzer():
                                         "날짜변환실패": 0,
                                         "타입변환실패": 0,
                                         "금액변환실패": 0,
-                                        "카테고리변환실패": 0,
+                                        "카테고리내용없음": 0,
                                         "내용없음": 0
                                     }
         for key in invalid_summary["실패사유"]:
@@ -122,7 +125,6 @@ class DataAnalyzer():
     def get_analysis_data(self):
         self._check_preprocessed()
         valid_types = self.valid_types
-        valid_categories = self.valid_categories
 
         analysis_data : pd.DataFrame = self.df[["date_dt","year","month","type_map",
                             "category_map","amount_num","content"]].copy()
@@ -135,77 +137,11 @@ class DataAnalyzer():
         analysis_data = analysis_data.dropna(axis=0)
 
         analysis_data = analysis_data[analysis_data["type"].isin(valid_types)]
-        analysis_data = analysis_data[analysis_data["category"].isin(valid_categories)]
 
         return analysis_data
     
-    # 출력용 데이터 생성
-    def get_view_data(self,data):
-        view_data = data[["date", "type", "category", "amount", "content"]]
-
-        return view_data
     
-    # 년,월 필터 데이터
-    def filter_by_year_month(self,year,month):
-        analysis_data = self.get_analysis_data()
-        filtered_data : pd.DataFrame  = analysis_data[((analysis_data["year"]==year) &
-                                                        (analysis_data["month"]==month))]
-        filtered_data = filtered_data.sort_values(by="date")
-        filtered_data = self.get_view_data(filtered_data)
-        return filtered_data
-    
-    
-    # 타입별 top n위까지 데이터생성
-    def get_top_n_by_type(self, type_name, n):
-        analysis_data : pd.DataFrame = self.get_analysis_data()
-        filtered_data : pd.DataFrame = analysis_data[analysis_data["type"]==type_name]
-        top_data = (
-            filtered_data
-            .sort_values(by="amount",ascending=False)
-            .head(n)
-            )
-        top_data = self.get_view_data(top_data)
-        
-        return top_data
-    
-    # 키워드 검색 
-    def filter_by_keyword(self, keyword=""):
-        keyword = keyword.strip()
-        analysis_data = self.get_analysis_data()
-        if not keyword:
-            return self.get_view_data(analysis_data)
-        
-        filtered_data = analysis_data[analysis_data["content"].str.contains(keyword,na=False)]
-        filtered_data = filtered_data.sort_values(by="date")
-        filtered_data = self.get_view_data(filtered_data)
 
-        return filtered_data
-
-    # 년,월 요약데이터 (수입 지출 총액 요약) 저장시 인덱스 True
-    def summary_by_year_month(self,year,month):
-        analysis_data = self.get_analysis_data()
-        filtered_data : pd.DataFrame  = analysis_data[((analysis_data["year"]==year) &
-                                                        (analysis_data["month"]==month))]
-        summary_data = filtered_data.groupby("type")[["amount"]].sum()
-
-        return summary_data
-    
-    # 카테고리,타입 요약 (카테고리 ,타입별 총액) 저장시 인덱스 True
-    def summary_by_category_type(self):
-        analysis_data = self.get_analysis_data()
-        summary_data = analysis_data.groupby(["category", "type"])[["amount"]].sum()
-        summary_data = summary_data.sort_values(by="type")
-
-        return summary_data
-    
-    # 카테고리 요약 (카테고리별 총액) 저장시 인덱스 True
-    def summary_by_category(self, type_name):
-        analysis_data = self.get_analysis_data()
-        filtered_data : pd.DataFrame = analysis_data[analysis_data["type"] == type_name]
-        summary_data = filtered_data.groupby("category")[["amount"]].sum()
-        summary_data = summary_data.sort_values(by="amount", ascending=False)
-
-        return summary_data
     
     # 데이터 저장
     def save_data(self,data : pd.DataFrame,file_path,index=False):

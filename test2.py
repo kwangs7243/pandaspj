@@ -20,5 +20,6 @@ invalid = da.find_invalid_rows()
 # print(f"전체 행 수 : {len(da.df)}")
 # print(f"정상 행 수: {len(da.get_view_data())}")
 # print(f"실패 행 수: {len(invalid_view)}")
-
+result = invalid[invalid["type_map"]=='기타']
 print(da.get_invalid_summary())
+print(result[["type_map","amount_num"]])
