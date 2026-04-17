@@ -13,7 +13,7 @@ class DataAnalyzer():
     # 데이터를 전처리했는지 확인 => 아닐경우 오류발생시키기 (누락된 컬럼명 같이 안내 디버깅 좋음)
     def _check_preprocessed(self):
         self._check_loaded()
-        required_columns = ["date_dt", "year", "month", "type_map", "category_map", "amount_num"]
+        required_columns = ["date_dt", "year", "month", "type_map", "category_str", "amount_num"]
         missing_columns = [col for col in required_columns if col not in self.df.columns]
         if missing_columns:
             raise RuntimeError("먼저 preprocess_data()를 실행해야 합니다."
