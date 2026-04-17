@@ -3,7 +3,7 @@ from src.ExpenseAnalyzer import ExpenseAnalyzer
 
 def run():
     da = DataAnalyzer()
-    da.load_data("data/raw/data.csv")
+    da.load_data("data/raw/realistic_expense_1000.csv")
     da.preprocess_data()
 
     ea = ExpenseAnalyzer(da.get_analysis_data())
