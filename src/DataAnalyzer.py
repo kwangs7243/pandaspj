@@ -49,14 +49,8 @@ class DataAnalyzer():
             'allowance':'수입', 'salary':'수입','수익':'수입','payback':'수입',
             'expense':'지출','출금':'지출','buy':'지출','used':'지출',
             'payment':'지출','spend':'지출','other':'지출'})
-        
 
-        df["category_str"] = df["category_raw"].str.strip().str.replace(" ", "", regex=False).str.lower()
-        df["category_map"] = df["category_str"].replace({
-            'food':'식비','cafe':'카페','shopping':'쇼핑',
-            'bonus':'급여','salary':'급여',
-            'transport':'교통', 'gift':'선물',
-            'travel': '여행'})
+        df["category_str"] = df["category_raw"].str.strip().str.replace(" ", "", regex=False)
 
         is_MAN = df["amount_raw"].str.contains("만")
         is_CHUN = df["amount_raw"].str.contains("천")
@@ -75,8 +69,9 @@ class DataAnalyzer():
         date_invalid = df["date_dt"].isna()
         type_invalid = ~df["type_map"].isin(valid_types) | df["type_map"].isna()
         amount_invalid = df["amount_num"].isna()
-        category_invalid = ((df["category_map"].str.strip() == "") | 
-                            (df["category_map"].isna())
+        category_invalid = (
+            (df["category_str"].str.strip() == "") | 
+            (df["category_str"].isna())
                             )
         content_invalid = df["content"].isna()
 
@@ -127,12 +122,12 @@ class DataAnalyzer():
         valid_types = self.valid_types
 
         analysis_data : pd.DataFrame = self.df[["date_dt","year","month","type_map",
-                            "category_map","amount_num","content"]].copy()
+                            "category_str","amount_num","content"]].copy()
         
         analysis_data = analysis_data.rename(
                             columns=
                                 {"date_dt":"date", "type_map":"type", 
-                                "category_map":"category", "amount_num":"amount"})
+                                "category_str":"category", "amount_num":"amount"})
         
         analysis_data = analysis_data.dropna(axis=0)
 

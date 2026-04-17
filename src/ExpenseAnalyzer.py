@@ -20,8 +20,10 @@ class ExpenseAnalyzer:
     # 기간 조회
     def filter_by_date_range(self,start_date, end_date):
         analysis_data = self.df
-        filtered_data = (analysis_data[(analysis_data["date"] >= start_date  ) &
-                                       (analysis_data["date"] <= end_date)])
+        filtered_data = (
+            analysis_data[(analysis_data["date"] >= start_date  )&
+                            (analysis_data["date"] <= end_date)]
+                        )
         return filtered_data
     # 카테고리 조회
     def filter_by_category(self,category_name):
