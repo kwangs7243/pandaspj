@@ -88,6 +88,7 @@ class DataAnalyzer():
 
         return df[invalid_mask]
     
+    # 전처리 결과 요약
     def get_invalid_summary(self):
         self._check_preprocessed()
 
@@ -153,31 +154,6 @@ class DataAnalyzer():
         filtered_data = self.get_view_data(filtered_data)
         return filtered_data
     
-    # 년,월 요약데이터 (수입 지출 총액 요약) 저장시 인덱스 True
-    def summary_by_year_month(self,year,month):
-        analysis_data = self.get_analysis_data()
-        filtered_data : pd.DataFrame  = analysis_data[((analysis_data["year"]==year) &
-                                                        (analysis_data["month"]==month))]
-        summary_data = filtered_data.groupby("type")[["amount"]].sum()
-
-        return summary_data
-    
-    # 카테고리,타입 요약 (카테고리 ,타입별 총액) 저장시 인덱스 True
-    def summary_by_category_type(self):
-        analysis_data = self.get_analysis_data()
-        summary_data = analysis_data.groupby(["category", "type"])[["amount"]].sum()
-        summary_data = summary_data.sort_values(by="type")
-
-        return summary_data
-    
-    # 카테고리 요약 (카테고리별 총액) 저장시 인덱스 True
-    def summary_by_category(self, type_name):
-        analysis_data = self.get_analysis_data()
-        filtered_data : pd.DataFrame = analysis_data[analysis_data["type"] == type_name]
-        summary_data = filtered_data.groupby("category")[["amount"]].sum()
-        summary_data = summary_data.sort_values(by="amount", ascending=False)
-
-        return summary_data
     
     # 타입별 top n위까지 데이터생성
     def get_top_n_by_type(self, type_name, n):
@@ -205,6 +181,32 @@ class DataAnalyzer():
 
         return filtered_data
 
+    # 년,월 요약데이터 (수입 지출 총액 요약) 저장시 인덱스 True
+    def summary_by_year_month(self,year,month):
+        analysis_data = self.get_analysis_data()
+        filtered_data : pd.DataFrame  = analysis_data[((analysis_data["year"]==year) &
+                                                        (analysis_data["month"]==month))]
+        summary_data = filtered_data.groupby("type")[["amount"]].sum()
+
+        return summary_data
+    
+    # 카테고리,타입 요약 (카테고리 ,타입별 총액) 저장시 인덱스 True
+    def summary_by_category_type(self):
+        analysis_data = self.get_analysis_data()
+        summary_data = analysis_data.groupby(["category", "type"])[["amount"]].sum()
+        summary_data = summary_data.sort_values(by="type")
+
+        return summary_data
+    
+    # 카테고리 요약 (카테고리별 총액) 저장시 인덱스 True
+    def summary_by_category(self, type_name):
+        analysis_data = self.get_analysis_data()
+        filtered_data : pd.DataFrame = analysis_data[analysis_data["type"] == type_name]
+        summary_data = filtered_data.groupby("category")[["amount"]].sum()
+        summary_data = summary_data.sort_values(by="amount", ascending=False)
+
+        return summary_data
+    
     # 데이터 저장
     def save_data(self,data : pd.DataFrame,file_path,index=False):
         data.to_csv(file_path, index=index, encoding="utf-8-sig")
