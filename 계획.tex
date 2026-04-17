@@ -1,0 +1,115 @@
+1. 조회 기능
+    filter_by_year_month(year, month)
+
+        이미 있음. 유지.
+
+    filter_by_date_range(start_date, end_date)
+
+        특정 기간 조회
+
+    filter_by_type(type_name)
+
+        수입/지출만 따로 보기
+
+    filter_by_category(category_name)
+
+        카테고리별 보기
+
+    filter_by_min_amount(min_amount)
+
+        최소 금액 이상만 보기
+
+    filter_by_keyword(keyword)
+
+        이미 있음. 유지.
+
+
+
+2. 요약 기능
+    summary_by_year_month(year, month)
+
+        이미 있음. 유지.
+
+    summary_total()
+
+        전체 수입/지출/순이익 요약
+
+    summary_by_month()
+
+        월별 수입/지출/순이익 전체 요약표
+
+    summary_by_type()
+
+        수입/지출 전체 합계
+
+    summary_by_category(type_name=None)
+
+        카테고리별 합계
+        type_name 없으면 전체, 있으면 해당 타입만
+
+    summary_count_by_category()
+
+        카테고리별 건수
+
+
+
+3. 순위 기능
+get_top_n_by_type(type_name, n)
+
+        이미 있음. 유지.
+
+    get_top_n_by_category(category_name, n)
+
+        특정 카테고리 내 top n
+
+    get_top_n_overall(n)
+
+        전체 금액 기준 top n
+
+
+
+4. 비교 기능
+    compare_months(year1, month1, year2, month2)
+
+        두 달 비교
+
+    compare_category_between_months(category, year1, month1, year2, month2)
+
+        카테고리 월 비교
+
+
+
+5. 통계 기능
+    average_by_category(type_name=None)
+
+        카테고리별 평균 금액
+
+    average_by_month()
+
+        월별 평균 지출/수입
+
+    expense_ratio_by_category(year=None, month=None)
+
+        카테고리 비중
+
+
+
+6. 시각화 기능
+
+    이건 별도 파일로 두는 걸 추천한다.
+
+    plot_monthly_income_expense()
+
+    월별 수입/지출 막대그래프
+
+    plot_category_expense_pie(year, month)
+
+    특정 월 카테고리 비중 원그래프
+
+    plot_monthly_net_flow()
+
+    월별 순이익 선그래프
+
+    plot_top_expenses_bar(n)
+
+    상위 지출 막대그래프
