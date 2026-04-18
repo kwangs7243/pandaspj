@@ -55,7 +55,7 @@ class ExpenseAnalyzer:
         keyword = keyword.strip()
         analysis_data = self.df
         if not keyword:
-            return self.get_view_data(analysis_data)
+            return analysis_data
         
         filtered_data = analysis_data[analysis_data["content"].str.contains(keyword,na=False)]
 
@@ -69,15 +69,15 @@ class ExpenseAnalyzer:
 
         summary_data = analysis_data.groupby("type")["amount"].sum()
 
-        total_imcome = summary_data["수입"]
-        total_expense = summary_data["지출"]
-        net_income = total_imcome - total_expense
+        total_income = summary_data.get("수입",0)
+        total_expense = summary_data.get("지출")
+        net_income = total_income - total_expense
 
         summary_total_data = pd.Series(
             {
-            "총수입" : total_imcome,
+            "총수입" : total_income,
             "총지출" : total_expense,
-            "순수익" : net_income}
+            "순이익" : net_income}
             )
 
         return summary_total_data
@@ -119,16 +119,21 @@ class ExpenseAnalyzer:
     # 카테고리별 요약
     def summary_by_category(self,type_name=None):
         analysis_data = self.df
-        summary_data = analysis_data.groupby("category")["amount"].sum()
+        summary_data = (
+            analysis_data.groupby(["category","type"])["amount"]
+            .sum()
+            .unstack(fill_value=0)
+            .reindex(columns=["수입","지출"],fill_value=0)
+            )
         if type_name is not None:
-            return summary_data.loc[[type_name]]
+            return summary_data[[type_name]]
 
         return summary_data
 
     # 카테고리별 건수 요약
     def summary_count_by_category(self):
         analysis_data = self.df
-        summary_data = analysis_data.groupby("category")["amount"].count()
+        summary_data = analysis_data.groupby("category").size()
 
         return summary_data
 #======================================요약 기능===========================================
