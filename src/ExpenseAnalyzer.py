@@ -1,5 +1,4 @@
 import pandas as pd
-import datetime as dt
 class ExpenseAnalyzer:
     def __init__(self,data:pd.DataFrame):
         self.df = data
@@ -13,16 +12,16 @@ class ExpenseAnalyzer:
     # 년,월별 조회
     def filter_by_year_month(self,year,month):
         analysis_data = self.df
-        filtered_data : pd.DataFrame  = analysis_data[((analysis_data["year"]==year) &
-                                                        (analysis_data["month"]==month))]
+        filtered_data = analysis_data[((analysis_data["year"]==year) &
+                                        (analysis_data["month"]==month))]
 
         return filtered_data
     
     # 기간별 조회
     def filter_by_date_range(self,start_date, end_date):
         analysis_data = self.df
-        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
-        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
+        start_date = pd.to_datetime(start_date,"%Y-%m-%d")
+        end_date = pd.to_datetime(end_date,"%Y-%m-%d")
         filtered_data = (
             analysis_data[(analysis_data["date"] >= start_date  )&
                             (analysis_data["date"] <= end_date)]
@@ -63,13 +62,24 @@ class ExpenseAnalyzer:
         return filtered_data
 #======================================조회 기능===========================================
 
-
 #======================================요약 기능===========================================
     # 월별 수입,지출 순이익 요약
     def summary_by_month(self):
         analysis_data = self.df
-        summary_data = analysis_data.groupby(["month","type"])[["amount"]].sum()
-        summary_data["net_income"] = ...
+        # summary_data = analysis_data.pivot_table(
+        #     index="month",columns="type",values="amount",aggfunc="sum")
+        # 월별 수입/지출 합계를 피벗 테이블 형태로 요약
+        # pivot_table은 집계와 형태 변환을 한 번에 처리할 수 있어서
+        # 단순 요약표를 만들 때 편하다.
+        # 다만 복잡한 집계나 후처리가 많아지면 groupby + agg + unstack 방식이 더 유연하다.
+        summary_data = (
+            analysis_data.groupby(["year_month","type"])["amount"]
+            .sum()
+            .unstack()
+            .fillna(0)
+            )
+        summary_data["순이익"] = summary_data["수입"] - summary_data["지출"]
+        
 
         return summary_data
 

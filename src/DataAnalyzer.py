@@ -1,5 +1,4 @@
 import pandas as pd
-import datetime as dt
 class DataAnalyzer():
     # 객체생성 (데이터프레임을 담을 객체, 타입허용값, 카테고리허용값)
     def __init__(self):
@@ -33,7 +32,6 @@ class DataAnalyzer():
     def preprocess_data(self):
         self._check_loaded()
         df = self.df
-        
         df.columns = ["date_raw","type_raw","category_raw","amount_raw","content"]
 
         df["date_parts"] = df["date_raw"].str.findall(r"\d+")
@@ -41,6 +39,7 @@ class DataAnalyzer():
         df["date_dt"] = pd.to_datetime(df["date_str"], errors="coerce", format="mixed")
         df["year"] = df["date_dt"].dt.year
         df["month"] = df["date_dt"].dt.month
+        df["year_month"] = df["date_dt"].dt.to_period("M")
 #         [       '용돈',        '출금',       'buy',      'used', 'allowance',   'incomee',
 #               'unknown',    'salary',        '수익',   'payment',     'spend',        '??',
 #          nan,    'expnse',   'payback',     'other',        '입금']
@@ -122,7 +121,7 @@ class DataAnalyzer():
         self._check_preprocessed()
         valid_types = self.valid_types
 
-        analysis_data : pd.DataFrame = self.df[["date_dt","year","month","type_map",
+        analysis_data = self.df[["date_dt","year","month","year_month","type_map",
                             "category_str","amount_num","content"]].copy()
         
         analysis_data = analysis_data.rename(
