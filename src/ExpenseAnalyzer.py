@@ -1,4 +1,5 @@
 import pandas as pd
+import datetime as dt
 class ExpenseAnalyzer:
     def __init__(self,data:pd.DataFrame):
         self.df = data
@@ -20,6 +21,8 @@ class ExpenseAnalyzer:
     # 기간별 조회
     def filter_by_date_range(self,start_date, end_date):
         analysis_data = self.df
+        start_date = dt.datetime.strptime(start_date,"%Y-%m-%d")
+        end_date = dt.datetime.strptime(end_date,"%Y-%m-%d")
         filtered_data = (
             analysis_data[(analysis_data["date"] >= start_date  )&
                             (analysis_data["date"] <= end_date)]
