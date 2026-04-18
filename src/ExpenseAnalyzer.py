@@ -67,7 +67,11 @@ class ExpenseAnalyzer:
 #======================================요약 기능===========================================
     # 월별 수입,지출 순이익 요약
     def summary_by_month(self):
-        pass
+        analysis_data = self.df
+        summary_data = analysis_data.groupby(["month","type"])[["amount"]].sum()
+        summary_data["net_income"] = ...
+
+        return summary_data
 
     # 특정 년,월 별 요약데이터 (수입 지출 총액 요약) 저장시 인덱스 True
     def summary_by_year_month(self,year,month):

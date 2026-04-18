@@ -1,4 +1,5 @@
 import pandas as pd
+import datetime as dt
 class DataAnalyzer():
     # 객체생성 (데이터프레임을 담을 객체, 타입허용값, 카테고리허용값)
     def __init__(self):
