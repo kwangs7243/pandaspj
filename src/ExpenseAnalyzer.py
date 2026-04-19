@@ -127,6 +127,26 @@ class ExpenseAnalyzer:
 #======================================순위 기능===========================================
     # 타입별 상위 N개
     def get_top_n_by_type(self,type_name:str, n:int):
-        top_date = self.df.groupby
+        top_data = (
+            self.df[self.df["type"] == type_name]
+            .sort_values(by="amount", ascending=False)
+            .head(n)
+            )
+        
+        return top_data
 
+    # 카테고리별 상위 N개
+    def get_top_n_by_category(self,category_name:str, n:int):
+        top_data = (
+            self.df[self.df["category"] == category_name]
+            .sort_values(by="amount", ascending=False)
+            .head(n)
+            )
+        
+        return top_data
+    
+    # 전체 상위 N개
+    def get_top_n_overall(self, n:int):
+        top_data = self.df.sort_values(by="amount", ascending=False).head(n)
 
+        return top_data
