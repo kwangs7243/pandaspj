@@ -3,14 +3,14 @@ class ExpenseAnalyzer:
     def __init__(self,data:pd.DataFrame):
         self.df = data
 
-    def get_view_data(self,data,sort_by="date",order="desc"):
+    def get_view_data(self,data:pd.DataFrame,sort_by:str="date",order:str="desc"):
         view_data = data[["date","type","category","amount","content"]]
-        view_data:pd.DataFrame = view_data.sort_values(by=sort_by,ascending=(order == "asc"))
+        view_data = view_data.sort_values(by=sort_by,ascending=(order == "asc"))
         return view_data
 #======================================조회 기능===========================================
 
     # 년,월별 조회
-    def filter_by_year_month(self,year,month):
+    def filter_by_year_month(self,year:int,month:int):
         analysis_data = self.df
         filtered_data = analysis_data[((analysis_data["year"]==year) &
                                         (analysis_data["month"]==month))]
@@ -18,10 +18,8 @@ class ExpenseAnalyzer:
         return filtered_data
     
     # 기간별 조회
-    def filter_by_date_range(self,start_date, end_date):
+    def filter_by_date_range(self,start_date:pd.Timestamp, end_date:pd.Timestamp):
         analysis_data = self.df
-        start_date = pd.to_datetime(start_date,"%Y-%m-%d")
-        end_date = pd.to_datetime(end_date,"%Y-%m-%d")
         filtered_data = (
             analysis_data[(analysis_data["date"] >= start_date  ) &
                             (analysis_data["date"] <= end_date)]
@@ -30,28 +28,28 @@ class ExpenseAnalyzer:
         return filtered_data
     
     # 타입 조회
-    def filter_by_type(self,type_name):
+    def filter_by_type(self,type_name:str):
         analysis_data = self.df
         filtered_data = analysis_data[analysis_data["type"]==type_name]
 
         return filtered_data
     
     # 카테고리별 조회
-    def filter_by_category(self,category_name):
+    def filter_by_category(self,category_name:str):
         analysis_data = self.df
         filtered_data = analysis_data[analysis_data["category"]==category_name]
 
         return filtered_data
     
     # 최소금액이상 조회
-    def filter_by_min_amount(self,min_amount):
+    def filter_by_min_amount(self,min_amount:int):
         analysis_data = self.df
         filtered_data = analysis_data[analysis_data["amount"] >= min_amount]
 
         return filtered_data
     
     # 키워드 조회 
-    def filter_by_keyword(self, keyword=""):
+    def filter_by_keyword(self, keyword:str=""):
         keyword = keyword.strip()
         analysis_data = self.df
         if not keyword:
@@ -69,8 +67,8 @@ class ExpenseAnalyzer:
 
         summary_data = analysis_data.groupby("type")["amount"].sum()
 
-        total_income = summary_data.get("수입",0)
-        total_expense = summary_data.get("지출")
+        total_income = summary_data.get("수입", 0)
+        total_expense = summary_data.get("지출", 0)
         net_income = total_income - total_expense
 
         summary_total_data = pd.Series(
@@ -107,7 +105,7 @@ class ExpenseAnalyzer:
                 # 2025-02     21616000  1305500  20310500
 
     # 특정 년,월 별 요약
-    def summary_by_year_month(self,year,month):
+    def summary_by_year_month(self,year:int,month:int):
         summary_data = self.summary_by_month()
         target = pd.Period(f"{year}-{month:02d}",freq="M")
 
@@ -117,7 +115,7 @@ class ExpenseAnalyzer:
                 # 2025-01     25710000  1504400  24205600
 
     # 카테고리별 요약
-    def summary_by_category(self,type_name=None):
+    def summary_by_category_type(self,type_name:str=None):
         analysis_data = self.df
         summary_data = (
             analysis_data.groupby(["category","type"])["amount"]
