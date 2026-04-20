@@ -19,37 +19,38 @@ class ExpenseAnalyzer:
         view_data = view_data.sort_values(by=sort_by,ascending=(order == "asc"))
         return view_data
 
-#======================================조회 기능===========================================
+#======================================외부 호출 ===========================================
+    #======================================조회 ===========================================
 
     def filter_by_year_month(self,year:int,month:int) -> pd.DataFrame:
         """
         해당 연도와 월의 데이터만 반환한다.
         """
-        return self.df[(self.df["year"]==year) & (self.df["month"]==month)]
+        return self._filter_by_year_month(data=self.df, year=year, month=month)
 
     def filter_by_date_range(self,start_date:pd.Timestamp, end_date:pd.Timestamp) -> pd.DataFrame:
         """
         시작일과 종료일 사이의 데이터만 반환한다.
         """
-        return self.df[(self.df["date"] >= start_date) & (self.df["date"] <= end_date)]
+        return self._filter_by_date_range(data=self.df, start_date=start_date, end_date=end_date)
 
     def filter_by_type(self,type_name:str) -> pd.DataFrame:
         """
         해당 타입(수입/지출)의 데이터만 반환한다.
         """
-        return self.df[self.df["type"]==type_name]
+        return self._filter_by_type(data=self.df, type_name=type_name)
 
     def filter_by_category(self,category_name:str) -> pd.DataFrame:
         """
         해당 카테고리의 데이터만 반환한다.
         """
-        return self.df[self.df["category"]==category_name]
+        return self._filter_by_category(data=self.df, category_name=category_name)
 
     def filter_by_min_amount(self,min_amount:int) -> pd.DataFrame:
         """
         지정한 금액 이상인 데이터만 반환한다.
         """
-        return self.df[self.df["amount"] >= min_amount]
+        return self._filter_by_min_amount(data=self.df, min_amount=min_amount)
 
     def filter_by_keyword(self, keyword:str="") -> pd.DataFrame:
         """
@@ -59,11 +60,47 @@ class ExpenseAnalyzer:
         keyword = keyword.strip()
         if not keyword:
             return self.df
-        return self.df[self.df["content"].str.contains(keyword,na=False)]
+        return self._filter_by_keyword(data=self.df, keyword=keyword)
 
-#======================================조회 기능===========================================
 
-#======================================요약 기능===========================================
+    #======================================조회 ===========================================
+
+#======================================외부 호출 ===========================================
+
+
+
+
+#======================================내부 계산 ===========================================
+
+    #======================================조회 기능===========================================
+    def _filter_by_year_month(self,data:pd.DataFrame,year:int,month:int) -> pd.DataFrame:
+
+        return data[(data["year"]==year) & (data["month"]==month)]
+
+
+    def _filter_by_date_range(self,data:pd.DataFrame, start_date:pd.Timestamp, end_date:pd.Timestamp) -> pd.DataFrame:
+        
+        return data[(data["date"] >= start_date) & (data["date"] <= end_date)]
+
+    def _filter_by_type(self,data:pd.DataFrame, type_name:str) -> pd.DataFrame:
+        
+        return data[data["type"]==type_name]
+
+    def _filter_by_category(self,data:pd.DataFrame, category_name:str) -> pd.DataFrame:
+        
+        return data[data["category"]==category_name]
+
+    def _filter_by_min_amount(self,data:pd.DataFrame, min_amount:int) -> pd.DataFrame:
+        
+        return data[data["amount"] >= min_amount]
+
+    def _filter_by_keyword(self,data:pd.DataFrame, keyword:str="") -> pd.DataFrame:
+        
+        return data[data["content"].str.contains(keyword,na=False)]
+
+    #======================================조회 기능===========================================
+
+    #======================================요약 기능===========================================
 
     def summary_total(self) -> pd.DataFrame:
         """
@@ -116,9 +153,9 @@ class ExpenseAnalyzer:
         """
         return self.df.groupby("category").size()
 
-#======================================요약 기능===========================================
+    #======================================요약 기능===========================================
 
-#======================================순위 기능===========================================
+    #======================================순위 기능===========================================
 
     def get_top_n_by_type(self,type_name:str, n:int) -> pd.DataFrame:
         """
@@ -146,10 +183,10 @@ class ExpenseAnalyzer:
         """
         return self.df.sort_values(by="amount", ascending=False).head(n)
 
-#======================================순위 기능===========================================
+    #======================================순위 기능===========================================
 
 
-#======================================비교 기능===========================================
+    #======================================비교 기능===========================================
 
     def compare_months(self,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
         """
@@ -202,6 +239,9 @@ class ExpenseAnalyzer:
         compare_data = pd.concat([base_df,target_df], axis=1)
 
         return compare_data
+    #======================================비교 기능===========================================
+
+#======================================내부계산===========================================
 
 
 
