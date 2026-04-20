@@ -70,7 +70,7 @@ class ExpenseAnalyzer:
         전체 데이터를 총수입, 총지출, 순이익으로 요약해 반환한다.
         """
         summary_data = self.df.pivot_table(columns="type", values="amount", aggfunc="sum", fill_value=0)
-        summary_data = summary_data.rename(columns={"수입":"총수입","지출":"총지출"})
+        summary_data.columns = ["총수입","총지출"]
         summary_data["순이익"] = summary_data["총수입"] - summary_data["총지출"]
         return summary_data
 
@@ -147,3 +147,22 @@ class ExpenseAnalyzer:
         return self.df.sort_values(by="amount", ascending=False).head(n)
 
 #======================================순위 기능===========================================
+
+
+#======================================비교 기능===========================================
+
+    def compare_months(self,base:tuple[int,int],target:tuple[int,int]):
+        base_year,base_month = base
+        target_year,target_month = target
+
+        base_df = self.summary_by_year_month(year=base_year,month=base_month).T
+
+        target_df = self.summary_by_year_month(year=target_year,month=target_month).T
+
+        compare_data = pd.concat([base_df,target_df], axis=(1))
+        base_col,target_col = compare_data.columns
+
+        compare_data["증감"] = compare_data[target_col] - compare_data[base_col]
+        compare_data["증감률"] = (compare_data["증감"] / compare_data[base_col] * 100).round(2)
+
+        return compare_data
