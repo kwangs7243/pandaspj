@@ -65,6 +65,65 @@ class ExpenseAnalyzer:
 
     #======================================조회 ===========================================
 
+    #======================================요약===========================================
+
+    def summary_total(self) -> pd.DataFrame:
+        """
+        전체 데이터를 총수입, 총지출, 순이익으로 요약해 반환한다.
+        """
+        return self._summary_total(data=self.df)
+
+    def summary_by_month(self) -> pd.DataFrame:
+        """
+        월별 수입, 지출, 순이익을 요약해 반환한다.
+        """
+        return self._summary_by_month(data=self.df)
+
+    def summary_by_year_month(self,year:int,month:int) -> pd.DataFrame:
+        """
+        특정 연도와 월의 수입, 지출, 순이익을 요약해 반환한다.
+        """
+        data = self._filter_by_year_month(data=self.df, year=year, month=month)
+        return self._summary_by_month(data=data)
+
+    def summary_by_category_type(self,type_name:str=None) -> pd.DataFrame:
+        """
+        카테고리별 금액을 타입 기준으로 요약해 반환한다.
+        타입을 지정하면 해당 타입만 반환한다.
+        """
+        
+        return self._summary_by_category_type(data=self.df, type_name=type_name)
+
+    def summary_count_by_category(self) -> pd.Series:
+        """
+        카테고리별 데이터 개수를 반환한다.
+        """
+        return self._summary_count_by_category(data=self.df)
+
+    #======================================요약===========================================
+    #======================================순위 기능===========================================
+
+    def get_top_n_by_type(self, type_name:str, n:int) -> pd.DataFrame:
+        """
+        해당 타입에서 금액이 큰 상위 n개 데이터를 반환한다.
+        """
+        data = self._filter_by_type(data=self.df,type_name=type_name)
+        return self._get_top_n(data=data,n=n)
+
+    def get_top_n_by_category(self,category_name:str, n:int) -> pd.DataFrame:
+        """
+        해당 카테고리에서 금액이 큰 상위 n개 데이터를 반환한다.
+        """
+        data = self._filter_by_category(data=self.df, category_name=category_name)
+        return self._get_top_n(data=data, n=n)
+
+    def get_top_n_overall(self, n:int) -> pd.DataFrame:
+        """
+        전체 데이터에서 금액이 큰 상위 n개를 반환한다.
+        """
+        return self._get_top_n(data=self.df, n=n)
+
+    #======================================순위 기능===========================================
 #======================================외부 호출 ===========================================
 
 
@@ -102,21 +161,22 @@ class ExpenseAnalyzer:
 
     #======================================요약 기능===========================================
 
-    def summary_total(self) -> pd.DataFrame:
+    def _summary_total(self,data:pd.DataFrame) -> pd.DataFrame:
         """
-        전체 데이터를 총수입, 총지출, 순이익으로 요약해 반환한다.
+        데이터를 총수입,총지출,순이익 으로 요약하여 재구성
         """
-        summary_data = self.df.pivot_table(columns="type", values="amount", aggfunc="sum", fill_value=0)
+
+        summary_data = data.pivot_table(columns="type", values="amount", aggfunc="sum", fill_value=0)
         summary_data.columns = ["총수입","총지출"]
         summary_data["순이익"] = summary_data["총수입"] - summary_data["총지출"]
         return summary_data
 
-    def summary_by_month(self) -> pd.DataFrame:
+    def _summary_by_month(self,data:pd.DataFrame) -> pd.DataFrame:
         """
-        월별 수입, 지출, 순이익을 요약해 반환한다.
+        데이터를 월별 수입,지출,순이익으로 요약하여 재구성
         """
         summary_data = (
-            self.df.groupby(["year_month","type"])["amount"]
+            data.groupby(["year_month","type"])["amount"]
             .sum()
             .unstack(fill_value=0)
             .reindex(columns=["수입","지출"],fill_value=0)
@@ -124,21 +184,12 @@ class ExpenseAnalyzer:
         summary_data["순이익"] = summary_data["수입"] - summary_data["지출"]
         return summary_data
 
-    def summary_by_year_month(self,year:int,month:int) -> pd.DataFrame:
+    def _summary_by_category_type(self, data:pd.DataFrame, type_name:str=None) -> pd.DataFrame:
         """
-        특정 연도와 월의 수입, 지출, 순이익을 요약해 반환한다.
-        """
-        summary_data = self.summary_by_month()
-        target = pd.Period(year=year, month=month ,freq="M")
-        return summary_data.loc[[target]]
-
-    def summary_by_category_type(self,type_name:str=None) -> pd.DataFrame:
-        """
-        카테고리별 금액을 타입 기준으로 요약해 반환한다.
-        타입을 지정하면 해당 타입만 반환한다.
+        데이터를 카테고리별 수입,지출로 요약하여 재구성
         """
         summary_data = (
-            self.df.groupby(["category","type"])["amount"]
+            data.groupby(["category","type"])["amount"]
             .sum()
             .unstack(fill_value=0)
             .reindex(columns=["수입","지출"],fill_value=0)
@@ -147,41 +198,26 @@ class ExpenseAnalyzer:
             return summary_data[[type_name]]
         return summary_data
 
-    def summary_count_by_category(self) -> pd.Series:
+    def _summary_count_by_category(self, data:pd.DataFrame) -> pd.Series:
         """
-        카테고리별 데이터 개수를 반환한다.
+        데이터를 카테고리별로 카운트
         """
-        return self.df.groupby("category").size()
+        
+        return data.groupby("category").size()
 
     #======================================요약 기능===========================================
 
     #======================================순위 기능===========================================
 
-    def get_top_n_by_type(self,type_name:str, n:int) -> pd.DataFrame:
+    def _get_top_n(self,data:pd.DataFrame, n:int) -> pd.DataFrame:
         """
-        해당 타입에서 금액이 큰 상위 n개 데이터를 반환한다.
+        금액이 큰 상위 n개 데이터를 반환
         """
         return (
-            self.df[self.df["type"] == type_name]
+            data
             .sort_values(by="amount", ascending=False)
             .head(n)
         )
-
-    def get_top_n_by_category(self,category_name:str, n:int) -> pd.DataFrame:
-        """
-        해당 카테고리에서 금액이 큰 상위 n개 데이터를 반환한다.
-        """
-        return (
-            self.df[self.df["category"] == category_name]
-            .sort_values(by="amount", ascending=False)
-            .head(n)
-        )
-
-    def get_top_n_overall(self, n:int) -> pd.DataFrame:
-        """
-        전체 데이터에서 금액이 큰 상위 n개를 반환한다.
-        """
-        return self.df.sort_values(by="amount", ascending=False).head(n)
 
     #======================================순위 기능===========================================
 
