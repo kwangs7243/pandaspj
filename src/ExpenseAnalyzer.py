@@ -130,7 +130,7 @@ class ExpenseAnalyzer:
 
     def compare_months(self,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
         """
-        타겟 월과 기준 월을 비교하여 증감, 증감률을 반환한다.
+        비교월과 기준월의 증감, 증감률을 반환한다.
         """
         base_year,base_month = base
         target_year,target_month = target
@@ -145,7 +145,7 @@ class ExpenseAnalyzer:
     
     def compare_category_between_months(self,category:str,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
         """
-        특정 카테고리에 대해 두 달 비교
+        특정 카테고리기준 비교월과 기준월의 증감,증감률을 반환한다
         """
         base_year,base_month = base
         target_year,target_month = target
