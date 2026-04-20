@@ -152,6 +152,9 @@ class ExpenseAnalyzer:
 #======================================비교 기능===========================================
 
     def compare_months(self,base:tuple[int,int],target:tuple[int,int]):
+        """
+        타겟 월과 기준 월을 비교하여 증감, 증감률을 반환한다.
+        """
         base_year,base_month = base
         target_year,target_month = target
 
