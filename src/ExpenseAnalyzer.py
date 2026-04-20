@@ -159,13 +159,14 @@ class ExpenseAnalyzer:
         target_year,target_month = target
 
         base_df = self.summary_by_year_month(year=base_year,month=base_month).T
-
         target_df = self.summary_by_year_month(year=target_year,month=target_month).T
 
         compare_data = pd.concat([base_df,target_df], axis=(1))
         base_col,target_col = compare_data.columns
 
         compare_data["증감"] = compare_data[target_col] - compare_data[base_col]
-        compare_data["증감률"] = (compare_data["증감"] / compare_data[base_col] * 100).round(2)
+        compare_data["증감률"] = (
+            compare_data["증감"] / compare_data[base_col].replace(0, None) * 100
+            ).round(2).fillna(0)
 
         return compare_data
