@@ -101,6 +101,7 @@ class ExpenseAnalyzer:
         return self._summary_count_by_category(data=self.df)
 
     #======================================요약===========================================
+
     #======================================순위===========================================
 
     def get_top_n_by_type(self, type_name:str, n:int) -> pd.DataFrame:
@@ -124,6 +125,7 @@ class ExpenseAnalyzer:
         return self._get_top_n(data=self.df, n=n)
 
     #======================================순위===========================================
+
     #======================================비교===========================================
 
     def compare_months(self,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
@@ -156,6 +158,21 @@ class ExpenseAnalyzer:
         target_data.columns = ["비교월"]
         return self._compare_months(base_data=base_data,target_data=target_data)
     #======================================비교===========================================
+
+    #======================================통계===========================================
+
+    def average_by_category(self,type_name:str=None):
+        data = self._filter_by_type(data=self.df,type_name=type_name)
+
+
+
+
+
+
+
+
+    #======================================통계===========================================
+
 
 #======================================외부 호출 ===========================================
 
@@ -271,6 +288,23 @@ class ExpenseAnalyzer:
         return compare_data
 
     #======================================비교 기능===========================================
+
+    #======================================통계 기능===========================================
+
+    def _average_by_category(self, data:pd.DataFrame) -> pd.DataFrame:
+        average_data = (
+            data.groupby(["category","type"])[["amount"]]
+            .mean()
+            .unstack(fill_value=0)
+            .reindex(columns=["수입","지출"], fill_value=0)
+            )
+
+
+
+
+
+    #======================================통계 기능===========================================
+
 
 #======================================내부계산===========================================
 
