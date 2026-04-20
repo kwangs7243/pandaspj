@@ -151,7 +151,7 @@ class ExpenseAnalyzer:
 
 #======================================비교 기능===========================================
 
-    def compare_months(self,base:tuple[int,int],target:tuple[int,int]):
+    def compare_months(self,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
         """
         타겟 월과 기준 월을 비교하여 증감, 증감률을 반환한다.
         """
@@ -166,7 +166,45 @@ class ExpenseAnalyzer:
 
         compare_data["증감"] = compare_data[target_col] - compare_data[base_col]
         compare_data["증감률"] = (
-            compare_data["증감"] / compare_data[base_col].replace(0, None) * 100
+            compare_data["증감"] / compare_data[base_col].replace(0, pd.NA) * 100
             ).round(2).fillna(0)
 
         return compare_data
+    
+    def compare_category_between_months(self,category:str,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
+        """
+        특정 카테고리에 대해 두 달 비교
+        """
+        filtered_data = self.filter_by_category(category_name=category)
+
+        base_year,base_month = base
+        target_year,target_month = target
+
+        base_peroid = pd.Period(year=base_year, month=base_month, freq="M")
+        target_peroid = pd.Period(year=target_year, month=target_month, freq="M")
+
+        base_df = (
+            filtered_data[filtered_data["year_month"]==base_peroid]
+            .groupby(["category","year_month","type"])["amount"]
+            .sum()
+            .unstack(fill_value=0)
+            .reindex(columns=["수입","지출"], fill_value=0)
+            ).T
+        
+        target_df = (
+            filtered_data.loc[filtered_data["year_month"]==target_peroid]
+            .groupby(["category","year_month","type"])["amount"]
+            .sum()
+            .unstack(fill_value=0)
+            .reindex(columns=["수입","지출"], fill_value=0)
+            ).T 
+
+        compare_data = pd.concat([base_df,target_df], axis=1)
+
+        return compare_data
+
+
+
+
+
+
