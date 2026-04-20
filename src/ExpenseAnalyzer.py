@@ -77,14 +77,14 @@ class ExpenseAnalyzer:
         """
         월별 수입, 지출, 순이익을 요약해 반환한다.
         """
-        return self._summary_by_month(data=self.df)
+        return self._summary_by_year_month(data=self.df)
 
     def summary_by_year_month(self,year:int,month:int) -> pd.DataFrame:
         """
         특정 연도와 월의 수입, 지출, 순이익을 요약해 반환한다.
         """
         data = self._filter_by_year_month(data=self.df, year=year, month=month)
-        return self._summary_by_month(data=data)
+        return self._summary_by_year_month(data=data)
 
     def summary_by_category_type(self,type_name:str=None) -> pd.DataFrame:
         """
@@ -101,7 +101,7 @@ class ExpenseAnalyzer:
         return self._summary_count_by_category(data=self.df)
 
     #======================================요약===========================================
-    #======================================순위 기능===========================================
+    #======================================순위===========================================
 
     def get_top_n_by_type(self, type_name:str, n:int) -> pd.DataFrame:
         """
@@ -123,7 +123,40 @@ class ExpenseAnalyzer:
         """
         return self._get_top_n(data=self.df, n=n)
 
-    #======================================순위 기능===========================================
+    #======================================순위===========================================
+    #======================================비교===========================================
+
+    def compare_months(self,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
+        """
+        타겟 월과 기준 월을 비교하여 증감, 증감률을 반환한다.
+        """
+        base_year,base_month = base
+        target_year,target_month = target
+        data_b = self._filter_by_year_month(data=self.df, year=base_year, month=base_month)
+        data_t = self._filter_by_year_month(data=self.df, year=target_year, month=target_month)
+        base_data = self._summary_by_category_type(data=data_b).T
+        base_data.columns = ["기준월"]
+        target_data = self._summary_by_category_type(data=data_t).T
+        target_data.columns = ["비교월"]
+        return self._compare_months(base_data=base_data,target_data=target_data)
+
+    
+    def compare_category_between_months(self,category:str,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
+        """
+        특정 카테고리에 대해 두 달 비교
+        """
+        base_year,base_month = base
+        target_year,target_month = target
+        data = self._filter_by_category(data=self.df, category_name=category)
+        data_b = self._filter_by_year_month(data=data,year=base_year, month=base_month)
+        data_t = self._filter_by_year_month(data=data, year=target_year, month=target_month)
+        base_data = self._summary_by_category_type(data=data_b).T
+        base_data.columns = ["기준월"]
+        target_data = self._summary_by_category_type(data=data_t).T
+        target_data.columns = ["비교월"]
+        return self._compare_months(base_data=base_data,target_data=target_data)
+    #======================================비교===========================================
+
 #======================================외부 호출 ===========================================
 
 
@@ -165,13 +198,12 @@ class ExpenseAnalyzer:
         """
         데이터를 총수입,총지출,순이익 으로 요약하여 재구성
         """
-
         summary_data = data.pivot_table(columns="type", values="amount", aggfunc="sum", fill_value=0)
         summary_data.columns = ["총수입","총지출"]
         summary_data["순이익"] = summary_data["총수입"] - summary_data["총지출"]
         return summary_data
 
-    def _summary_by_month(self,data:pd.DataFrame) -> pd.DataFrame:
+    def _summary_by_year_month(self,data:pd.DataFrame) -> pd.DataFrame:
         """
         데이터를 월별 수입,지출,순이익으로 요약하여 재구성
         """
@@ -211,7 +243,7 @@ class ExpenseAnalyzer:
 
     def _get_top_n(self,data:pd.DataFrame, n:int) -> pd.DataFrame:
         """
-        금액이 큰 상위 n개 데이터를 반환
+        데이터를 금액이 큰 상위 n개로 재구성
         """
         return (
             data
@@ -224,57 +256,20 @@ class ExpenseAnalyzer:
 
     #======================================비교 기능===========================================
 
-    def compare_months(self,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
+    def _compare_months(self,base_data:pd.DataFrame,target_data:pd.DataFrame) -> pd.DataFrame:
         """
-        타겟 월과 기준 월을 비교하여 증감, 증감률을 반환한다.
+        두 데이터를 나열하여 증감, 증감률을 계산
         """
-        base_year,base_month = base
-        target_year,target_month = target
-
-        base_df = self.summary_by_year_month(year=base_year,month=base_month).T
-        target_df = self.summary_by_year_month(year=target_year,month=target_month).T
-
-        compare_data = pd.concat([base_df,target_df], axis=(1))
+        compare_data = pd.concat([base_data,target_data], axis=1)
         base_col,target_col = compare_data.columns
 
         compare_data["증감"] = compare_data[target_col] - compare_data[base_col]
         compare_data["증감률"] = (
             compare_data["증감"] / compare_data[base_col].replace(0, pd.NA) * 100
-            ).round(2).fillna(0)
+            ).fillna(0).round(2)
 
         return compare_data
-    
-    def compare_category_between_months(self,category:str,base:tuple[int,int],target:tuple[int,int]) -> pd.DataFrame:
-        """
-        특정 카테고리에 대해 두 달 비교
-        """
-        filtered_data = self.filter_by_category(category_name=category)
 
-        base_year,base_month = base
-        target_year,target_month = target
-
-        base_peroid = pd.Period(year=base_year, month=base_month, freq="M")
-        target_peroid = pd.Period(year=target_year, month=target_month, freq="M")
-
-        base_df = (
-            filtered_data[filtered_data["year_month"]==base_peroid]
-            .groupby(["category","year_month","type"])["amount"]
-            .sum()
-            .unstack(fill_value=0)
-            .reindex(columns=["수입","지출"], fill_value=0)
-            ).T
-        
-        target_df = (
-            filtered_data.loc[filtered_data["year_month"]==target_peroid]
-            .groupby(["category","year_month","type"])["amount"]
-            .sum()
-            .unstack(fill_value=0)
-            .reindex(columns=["수입","지출"], fill_value=0)
-            ).T 
-
-        compare_data = pd.concat([base_df,target_df], axis=1)
-
-        return compare_data
     #======================================비교 기능===========================================
 
 #======================================내부계산===========================================
