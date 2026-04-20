@@ -161,11 +161,21 @@ class ExpenseAnalyzer:
 
     #======================================통계===========================================
 
-    def average_by_category(self,type_name:str=None):
-        data = self._filter_by_type(data=self.df,type_name=type_name)
+    def average_amount_by_category_type(self,type_name:str=None) -> pd.DataFrame:
+        """
+        카테고리별 금액평균을 타입 기준으로 요약해 반환한다.
+        타입을 지정하면 해당 타입만 반환한다.
+        """
+        
 
+        return self._average_amount_by_category_type(data=self.df,type_name=type_name)
 
-
+    def average_amount_by_year_month_type(self,type_name:str=None) -> pd.DataFrame:
+        """
+        연월별 금액평균을 타입 기준으로 요약해 반환한다.
+        타입을 지정하면 해당 타입만 반환한다.
+        """
+        return self._average_amount_by_year_month_type(data=self.df,type_name=type_name)
 
 
 
@@ -192,7 +202,6 @@ class ExpenseAnalyzer:
         return data[(data["date"] >= start_date) & (data["date"] <= end_date)]
 
     def _filter_by_type(self,data:pd.DataFrame, type_name:str) -> pd.DataFrame:
-        
         return data[data["type"]==type_name]
 
     def _filter_by_category(self,data:pd.DataFrame, category_name:str) -> pd.DataFrame:
@@ -291,15 +300,37 @@ class ExpenseAnalyzer:
 
     #======================================통계 기능===========================================
 
-    def _average_by_category(self, data:pd.DataFrame) -> pd.DataFrame:
+    def _average_amount_by_category_type(self, data:pd.DataFrame, type_name:str=None) -> pd.DataFrame:
+        """
+        데이터를 카테고리별 수입,지출 평균값으로 요약
+        """
         average_data = (
-            data.groupby(["category","type"])[["amount"]]
+            data.groupby(["category","type"])["amount"]
             .mean()
             .unstack(fill_value=0)
             .reindex(columns=["수입","지출"], fill_value=0)
+            .round(0)
+            .astype(int)
             )
+        if type_name is not None:
+            return average_data[[type_name]]
+        return average_data
 
-
+    def  _average_amount_by_year_month_type(self, data:pd.DataFrame, type_name:str=None) -> pd.date_rangea:
+        """
+        데이터를 연월별 수입,지출 평균값으로 요약
+        """
+        average_data = (
+            data.groupby(["year_month","type"])["amount"]
+            .mean()
+            .unstack(fill_value=0)
+            .reindex(columns=["수입","지출"], fill_value=0)
+            .round(0)
+            .astype(int)
+            )
+        if type_name is not None:
+            return average_data[[type_name]]
+        return average_data
 
 
 
