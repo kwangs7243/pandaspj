@@ -8,7 +8,6 @@ da.preprocess_data()
 ea = ExpenseAnalyzer(da.get_analysis_data())
 aa = pd.Period(year=2025,month=1,freq="M")
 
-data = ea.average_amount_by_year_month_type()
-
+data = ea.summary_category_expense_ratio()
 print(data)
 
