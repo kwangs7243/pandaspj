@@ -182,7 +182,7 @@ class ExpenseAnalyzer:
         카테고리별 지출 비중을 요약해 반환한다.
         """
         data = self._summary_by_category_type(data=self.df, type_name="지출")
-        return self._get_expense_ratio(data=data, type_name="지출")
+        return self._calculate_ratio(data=data, type_name="지출")
 
     #======================================통계===========================================
 
@@ -334,16 +334,21 @@ class ExpenseAnalyzer:
         if type_name is not None:
             return average_data[[type_name]]
         return average_data
-    def _get_expense_ratio(self,data:pd.DataFrame,type_name:str) -> pd.DataFrame:
+    def _calculate_ratio(self,data:pd.DataFrame,type_name:str) -> pd.DataFrame:
         """
         데이터에서 입력받은 타입의 비중을 계산한다
         """
-        total = data[type_name].sum()
-        data["비중"] =(
-            (data[type_name] / total)*100
+        ratio_data = data.copy()
+        total = ratio_data[type_name].sum()
+
+        if total == 0:
+            ratio_data["비중"] = 0
+            return ratio_data
+        
+        ratio_data["비중"] =(
+            (ratio_data[type_name] / total)*100
             ).round(0).astype(int)
-            
-        return data
+        return ratio_data
     def _summary_excess_amount_vs_average(self,data:pd.DataFrame):
         pass
 
