@@ -336,7 +336,7 @@ class ExpenseAnalyzer:
         return average_data
     def _calculate_ratio(self,data:pd.DataFrame,type_name:str) -> pd.DataFrame:
         """
-        데이터에서 입력받은 타입의 비중을 계산한다
+        데이터에서 입력받은 타입에서 비중을 계산한다
         """
         ratio_data = data.copy()
         total = ratio_data[type_name].sum()
