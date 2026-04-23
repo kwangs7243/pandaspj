@@ -136,9 +136,9 @@ class ExpenseAnalyzer:
         target_year,target_month = target
         data_b = self._filter_by_year_month(data=self.df, year=base_year, month=base_month)
         data_t = self._filter_by_year_month(data=self.df, year=target_year, month=target_month)
-        base_data = self._summary_by_category_type(data=data_b).T
+        base_data = self._summary_by_year_month(data=data_b).T
         base_data.columns = ["기준월"]
-        target_data = self._summary_by_category_type(data=data_t).T
+        target_data = self._summary_by_year_month(data=data_t).T
         target_data.columns = ["비교월"]
         return self._compare_months(base_data=base_data,target_data=target_data)
 
@@ -183,7 +183,7 @@ class ExpenseAnalyzer:
         """
         data = self._summary_by_category_type(data=self.df, type_name="지출")
         return self._calculate_ratio(data=data, type_name="지출")
-
+    
     #======================================통계===========================================
 
 
@@ -349,8 +349,23 @@ class ExpenseAnalyzer:
             (ratio_data[type_name] / total)*100
             ).round(0).astype(int)
         return ratio_data
-    def _summary_excess_amount_vs_average(self,data:pd.DataFrame):
-        pass
+    def  _filter_rows_above_average(self,data:pd.DataFrame) -> pd.DataFrame:
+        """
+        행기준 금액 평균이상을 계산한다
+        """
+        mean_amount = data["amount"].mean()
+
+        return data[data["amount"] > mean_amount]
+    
+    def _filter_summary_above_average(self,data:pd.DataFrame,taget_col:str) -> pd.DataFrame:
+        """
+        요약기준 금액 평균이상을 계산한다
+        """
+        mean_amount = data[taget_col].mean()
+
+        return data[data[taget_col] > mean_amount]
+
+
 
 
     #======================================통계 기능===========================================
